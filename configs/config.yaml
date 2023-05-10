@@ -1,10 +1,11 @@
 defaults:
+  - _self_
   - model: resnet
   - dataset: 10_classes_supervised
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 100
+epochs: 5
 
 datamodule:
   _target_: data.datamodule.DataModule
@@ -13,6 +14,16 @@ datamodule:
   val_transform: ${dataset.test_transform}
   batch_size: ${dataset.batch_size}
   num_workers: ${dataset.num_workers}
+
+# To create training sets and test sets
+datasetmodule:
+  _target_: data.datasetmodule.DatasetModule
+  train_dataset_path: ${dataset.train_path}
+  train_transform: ${dataset.train_transform}
+  test_dataset_path: ${dataset.test_path}
+  test_transform: ${dataset.test_transform}
+  batch_size: 10
+  num_workers: 1
 
 data_dir: ${root_dir}/dataset
 root_dir:  ${hydra:runtime.cwd}

@@ -1,14 +1,18 @@
 import torch
 import wandb
 import hydra
+import os
 from tqdm import tqdm
 
-logger = wandb.init(project="challenge", name="run")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
+
+    os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
+    # os.environ['WANDB_MODE'] = 'offline'
+
+    logger = wandb.init(project="challenge", name="run")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model = hydra.utils.instantiate(cfg.model).to(device)
     optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
     loss_fn = hydra.utils.instantiate(cfg.loss_fn)
@@ -70,6 +74,7 @@ def train(cfg):
             }
         )
     torch.save(model.state_dict(), cfg.checkpoint_path)
+    wandb.finish()
 
 
 if __name__ == "__main__":

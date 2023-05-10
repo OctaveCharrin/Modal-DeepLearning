@@ -5,4 +5,4 @@ num_classes: 10
 batch_size: 128
 num_workers: 8
 train_path: ${data_dir}/train
-test_path: ${data_dir}/test
+test_path: ${data_dir}/train
