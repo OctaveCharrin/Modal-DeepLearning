@@ -69,7 +69,7 @@ def train(cfg):
                 "val_acc": epoch_acc,
             }
         )
-    torch.save(model.state_dict(), "model.pth")
+    torch.save(model.state_dict(), cfg.checkpoint_path)
 
 
 if __name__ == "__main__":

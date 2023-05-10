@@ -1,21 +1,28 @@
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from hydra.utils import instantiate
+import torch
 
 
 class DataModule:
     def __init__(
         self,
         train_dataset_path,
-        val_dataset_path,
         train_transform,
         val_transform,
         batch_size,
         num_workers,
     ):
-        print(train_dataset_path, val_dataset_path)
-        self.train_dataset = ImageFolder(train_dataset_path, transform=train_transform)
-        self.val_dataset = ImageFolder(val_dataset_path, transform=val_transform)
+        self.dataset = ImageFolder(train_dataset_path, transform=train_transform)
+        self.train_dataset, self.val_dataset = torch.utils.data.random_split(
+            self.dataset,
+            [
+                int(0.8 * len(self.dataset)),
+                len(self.dataset) - int(0.8 * len(self.dataset)),
+            ],
+            generator=torch.Generator().manual_seed(3407),
+        )
+        self.val_dataset.transform = val_transform
         self.batch_size = batch_size
         self.num_workers = num_workers
 
