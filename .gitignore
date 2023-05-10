@@ -1,5 +1,8 @@
 split_dataset.py
 wandb
 outputs
-dataset
+/dataset
 challenge_subset
+create_test.py
+/dataset.zip
+/checkpoints

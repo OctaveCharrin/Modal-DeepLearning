@@ -8,15 +8,15 @@ epochs: 100
 
 datamodule:
   _target_: data.datamodule.DataModule
-  train_dataset_path: ${data_dir}/${dataset.train_path}
-  val_dataset_path: ${data_dir}/${dataset.val_path}
+  train_dataset_path: ${dataset.train_path}
   train_transform: ${dataset.train_transform}
   val_transform: ${dataset.test_transform}
-  batch_size: 128
-  num_workers: 8
+  batch_size: ${dataset.batch_size}
+  num_workers: ${dataset.num_workers}
 
 data_dir: ${root_dir}/dataset
 root_dir:  ${hydra:runtime.cwd}
+checkpoint_path: ${root_dir}/checkpoints/model.pt
 
 hydra:
   run:
