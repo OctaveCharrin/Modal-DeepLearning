@@ -3,5 +3,4 @@ wandb
 outputs
 dataset
 challenge_subset
-Pipfile
-Pipfile.lock
+checkpoints
