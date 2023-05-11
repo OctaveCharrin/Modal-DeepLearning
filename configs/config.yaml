@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: resnet
+  - model: augmented_resnet
   - dataset: 10_classes_supervised
   - optim: adamw
   - loss_fn: cross_entropy

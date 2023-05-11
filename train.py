@@ -3,11 +3,12 @@ import wandb
 import hydra
 import os
 from tqdm import tqdm
+from torchvision.transforms import transforms
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
 
-    os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
+    # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
     logger = wandb.init(project="challenge", name="run")
@@ -18,6 +19,17 @@ def train(cfg):
     loss_fn = hydra.utils.instantiate(cfg.loss_fn)
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
+    train_dataset = datamodule.train_dataset
+    val_dataset = datamodule.val_dataset
+
+    augments = [transforms.Compose([
+                              transforms.ToPILImage(),
+                              transforms.Resize((164,164)),
+                              transforms.RandomRotation(50,expand=True),  
+                              transforms.Resize((164,164)),
+                              transforms.ToTensor(),
+                              ])]
+    
     train_loader = datamodule.train_dataloader()
     val_loader = datamodule.val_dataloader()
 
@@ -25,35 +37,36 @@ def train(cfg):
         epoch_loss = 0
         epoch_num_correct = 0
         num_samples = 0
-        for i, batch in enumerate(train_loader):
-            images, labels = batch
-            images = images.to(device)
-            labels = labels.to(device)
-            preds = model(images)
-            loss = loss_fn(preds, labels)
-            logger.log({"loss": loss.detach().cpu().numpy()})
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.detach().cpu().numpy() * len(images)
-            epoch_num_correct += (
-                (preds.argmax(1) == labels).sum().detach().cpu().numpy()
+        for transform in tqdm(transforms):
+            for i, batch in enumerate(train_loader):
+                images, labels = batch
+                images = images.to(device)
+                labels = labels.to(device)
+                preds = model(images)
+                loss = loss_fn(preds, labels)
+                logger.log({"loss": loss.detach().cpu().numpy()})
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.detach().cpu().numpy() * len(images)
+                epoch_num_correct += (
+                    (preds.argmax(1) == labels).sum().detach().cpu().numpy()
+                )
+                num_samples += len(images)
+            epoch_loss /= num_samples
+            epoch_acc = epoch_num_correct / num_samples
+            logger.log(
+                {
+                    "epoch": epoch,
+                    "train_loss_epoch": epoch_loss,
+                    "train_acc": epoch_acc,
+                }
             )
-            num_samples += len(images)
-        epoch_loss /= num_samples
-        epoch_acc = epoch_num_correct / num_samples
-        logger.log(
-            {
-                "epoch": epoch,
-                "train_loss_epoch": epoch_loss,
-                "train_acc": epoch_acc,
-            }
-        )
-        epoch_loss = 0
-        epoch_num_correct = 0
-        num_samples = 0
+            epoch_loss = 0
+            epoch_num_correct = 0
+            num_samples = 0
 
-        for i, batch in enumerate(val_loader):
+        for _, batch in enumerate(val_loader):
             images, labels = batch
             images = images.to(device)
             labels = labels.to(device)

@@ -6,6 +6,7 @@ class ResNetFinetune(nn.Module):
     def __init__(self, num_classes, frozen=False):
         super().__init__()
         self.backbone = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
+        # self.backbone = torchvision.models.resnet50(pretrained=True) # For ines code
         self.backbone.fc = nn.Identity()
         if frozen:
             for param in self.backbone.parameters():

@@ -6,3 +6,4 @@ challenge_subset
 create_test.py
 /dataset.zip
 /checkpoints
+/data/__pycache__
