@@ -7,3 +7,5 @@ create_test.py
 /dataset.zip
 /checkpoints
 /data/__pycache__
+Pipfile
+Pipfile.lock
