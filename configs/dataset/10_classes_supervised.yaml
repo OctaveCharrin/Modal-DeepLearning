@@ -1,6 +1,13 @@
 defaults:
   - train_transform: simple
   - test_transform: simple
+  # - color_jitter: color_jitter
+  # - random_crop: random_crop
+  # - random_erasing: random_erasing
+  # - random_flip: random_flip
+  # - random_gaussian_noise: random_gaussian_noise
+  # - random_rotation: random_rotation
+
 num_classes: 10
 batch_size: 128
 num_workers: 8

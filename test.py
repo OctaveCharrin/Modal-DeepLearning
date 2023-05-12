@@ -18,7 +18,7 @@ def test(cfg):
 
     print("creating dataloader...")
     datasetmodule = hydra.utils.instantiate(cfg.datasetmodule)
-    test_loader = datasetmodule.train_dataloader()
+    test_loader = datasetmodule.test_dataloader()
     print("done.")
 
     # Compute the accuracy of the model

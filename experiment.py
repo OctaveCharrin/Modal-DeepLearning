@@ -3,21 +3,30 @@ from hydra.utils import instantiate
 import hydra
 import torch
 from torchvision import transforms
+from augments.augmentationtransforms import AugmentationTransforms
+import numpy as np
+import matplotlib.pyplot as plt
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def experiment(cfg):
-
-    unlabelled_dataset = ImageFolder(cfg.datasetmodule.test_dataset_path, transform=transforms.ToTensor())
-    res=[]
-    for i in range(10):
-        for j in range(100):
-            item = unlabelled_dataset[i*6000+j]
-            item = (item[0],i)
-            res.append(item)
-
-    test_dataset = torch.tensor(res)
+    t = AugmentationTransforms()
+    augmentsList = t.toList()
+    datamodule = hydra.utils.instantiate(cfg.datamodule)
+    dataset = datamodule.train_dataset
     
-    return test_dataset
+
+    for transform in augmentsList:
+        plt.title(transform)
+        img = dataset[0][0]
+        npimg = img.numpy()
+        plt.imshow(np.transpose(npimg,(1,2,0)))
+        plt.show()
+        img = transform(img)
+        npimg = img.numpy()
+        plt.title(transform)
+        plt.imshow(np.transpose(npimg,(1,2,0)))
+        plt.show()
+        
 
 
 if __name__ == "__main__":

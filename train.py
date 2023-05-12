@@ -22,13 +22,7 @@ def train(cfg):
     train_dataset = datamodule.train_dataset
     val_dataset = datamodule.val_dataset
 
-    augments = [transforms.Compose([
-                              transforms.ToPILImage(),
-                              transforms.Resize((164,164)),
-                              transforms.RandomRotation(50,expand=True),  
-                              transforms.Resize((164,164)),
-                              transforms.ToTensor(),
-                              ])]
+    augments = [None]
     
     train_loader = datamodule.train_dataloader()
     val_loader = datamodule.val_dataloader()
@@ -37,7 +31,7 @@ def train(cfg):
         epoch_loss = 0
         epoch_num_correct = 0
         num_samples = 0
-        for transform in tqdm(transforms):
+        for transform in tqdm(augments):
             for i, batch in enumerate(train_loader):
                 images, labels = batch
                 images = images.to(device)

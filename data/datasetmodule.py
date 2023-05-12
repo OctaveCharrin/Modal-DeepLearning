@@ -19,11 +19,13 @@ class DatasetModule:
 
         self.unlabelled_dataset = ImageFolder(test_dataset_path, transform=test_transform)
 
+        label = [6,4,0,8,1,2,5,3,9,7]
+
         test_dataset=[]
         for i in range(10):
             for j in range(100):
-                item = self.unlabelled_dataset[i*6200+j]
-                item = (item[0],i)
+                item = self.unlabelled_dataset[i*6300+j]
+                item = (item[0],label[i])
                 test_dataset.append(item)
 
         self.test_dataset = test_dataset
