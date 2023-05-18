@@ -18,7 +18,7 @@ def test(cfg):
 
     print("creating dataloader...")
     datasetmodule = hydra.utils.instantiate(cfg.datasetmodule)
-    test_loader = datasetmodule.test_dataloader()
+    test_loader = datasetmodule.train_dataloader()
     print("done.")
 
     # Compute the accuracy of the model
@@ -27,6 +27,8 @@ def test(cfg):
     with torch.no_grad():
         for batch in tqdm(test_loader):
             images, labels = batch
+            images = images.to(device)
+            labels = labels.to(device)
             predictions = model(images)
             _, predicted_labels = torch.max(predictions, 1)
             num_correct += (predicted_labels == labels).sum().item()

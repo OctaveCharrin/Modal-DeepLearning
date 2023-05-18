@@ -1,9 +1,12 @@
 split_dataset.py
 wandb
 outputs
+/datasetV2
 /dataset
 challenge_subset
 create_test.py
 /dataset.zip
+/datasetV2.zip
 /checkpoints
-/data/__pycache__
+__pycache__
+submission.csv

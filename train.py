@@ -3,7 +3,9 @@ import wandb
 import hydra
 import os
 from tqdm import tqdm
-from torchvision.transforms import transforms
+from torch.utils.data import DataLoader
+from augments.augmentationtransforms import AugmentationTransforms
+
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
@@ -20,11 +22,8 @@ def train(cfg):
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
     train_dataset = datamodule.train_dataset
-    val_dataset = datamodule.val_dataset
-
-    augments = [None]
+    augments = AugmentationTransforms().toList()
     
-    train_loader = datamodule.train_dataloader()
     val_loader = datamodule.val_dataloader()
 
     for epoch in tqdm(range(cfg.epochs)):
@@ -32,7 +31,11 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
         for transform in tqdm(augments):
-            for i, batch in enumerate(train_loader):
+            # Create the dataloader with the right transform
+            train_dataset.transform = transform
+            train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+
+            for _, batch in enumerate(train_loader):
                 images, labels = batch
                 images = images.to(device)
                 labels = labels.to(device)
@@ -60,17 +63,18 @@ def train(cfg):
             epoch_num_correct = 0
             num_samples = 0
 
-        for _, batch in enumerate(val_loader):
-            images, labels = batch
-            images = images.to(device)
-            labels = labels.to(device)
-            preds = model(images)
-            loss = loss_fn(preds, labels)
-            epoch_loss += loss.detach().cpu().numpy() * len(images)
-            epoch_num_correct += (
-                (preds.argmax(1) == labels).sum().detach().cpu().numpy()
-            )
-            num_samples += len(images)
+            for _, batch in enumerate(val_loader):
+                images, labels = batch
+                images = images.to(device)
+                labels = labels.to(device)
+                preds = model(images)
+                loss = loss_fn(preds, labels)
+                epoch_loss += loss.detach().cpu().numpy() * len(images)
+                epoch_num_correct += (
+                    (preds.argmax(1) == labels).sum().detach().cpu().numpy()
+                )
+                num_samples += len(images)
+
         epoch_loss /= num_samples
         epoch_acc = epoch_num_correct / num_samples
         logger.log(

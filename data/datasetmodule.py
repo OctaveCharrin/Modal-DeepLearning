@@ -1,5 +1,29 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import ImageFolder
+import torch
+
+import os
+from PIL import Image
+
+
+class UnlabelledDataset(Dataset):
+    def __init__(self, folder_path, transform=None):
+        self.folder_path = folder_path
+        self.file_list = os.listdir(folder_path)
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.file_list)
+    
+    def __getitem__(self, index):
+        image_path = os.path.join(self.folder_path, self.file_list[index])
+        image = Image.open(image_path).convert("RGB")
+        
+        if self.transform:
+            image = self.transform(image)
+        
+        return image, index
+
 
 
 class DatasetModule:
@@ -7,28 +31,24 @@ class DatasetModule:
         self,
         train_dataset_path,
         train_transform,
-        test_dataset_path,
-        test_transform,
+        unlabelled_dataset_path,
+        unlabelled_transform,
         batch_size,
         num_workers,
     ):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-        self.train_dataset = ImageFolder(train_dataset_path, transform=train_transform)
-
-        self.unlabelled_dataset = ImageFolder(test_dataset_path, transform=test_transform)
-
-        label = [6,4,0,8,1,2,5,3,9,7]
-
-        test_dataset=[]
-        for i in range(10):
-            for j in range(100):
-                item = self.unlabelled_dataset[i*6300+j]
-                item = (item[0],label[i])
-                test_dataset.append(item)
-
-        self.test_dataset = test_dataset
+        self.dataset = ImageFolder(train_dataset_path, transform=train_transform)
+        self.train_dataset, self.val_dataset = torch.utils.data.random_split(
+            self.dataset,
+            [
+                int(0.8 * len(self.dataset)),
+                len(self.dataset) - int(0.8 * len(self.dataset)),
+            ],
+            generator=torch.Generator().manual_seed(3407),
+        )
+        self.unlabelled_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
 
     def train_dataloader(self):
         return DataLoader(
@@ -37,18 +57,18 @@ class DatasetModule:
             shuffle=True,
             num_workers=self.num_workers,
         )
-
-    def test_dataloader(self):
+    
+    def unlabelled_dataloader(self):
         return DataLoader(
-            self.test_dataset,
+            self.unlabelled_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
         )
     
-    def unlabelled_dataloader(self):
+    def val_dataloader(self):
         return DataLoader(
-            self.unlabelled_dataset,
+            self.val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

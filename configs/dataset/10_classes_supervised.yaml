@@ -1,6 +1,7 @@
 defaults:
   - train_transform: simple
   - test_transform: simple
+  - unlabelled_transform: simple
   # - color_jitter: color_jitter
   # - random_crop: random_crop
   # - random_erasing: random_erasing
@@ -8,8 +9,9 @@ defaults:
   # - random_gaussian_noise: random_gaussian_noise
   # - random_rotation: random_rotation
 
-num_classes: 10
-batch_size: 128
-num_workers: 8
+num_classes: 48
+batch_size: 256
+num_workers: 0
 train_path: ${data_dir}/train
-test_path: ${data_dir}/unlabelled
+test_path: ${data_dir}/train
+unlabelled_path: ${data_dir}/unlabelled

@@ -12,11 +12,11 @@ class AugmentedResNetFinetune(nn.Module):
                 param.requires_grad = False
         self.classifier = nn.Sequential(nn.BatchNorm1d(2048),
                                         nn.Dropout(p=0.25),
-                                        nn.Linear(in_features=2048, out_features=2048),
+                                        nn.Linear(in_features=2048, out_features=1024),
                                         nn.ReLU(),
                                         nn.BatchNorm1d(2048, eps=1e-05, momentum=0.1),
                                         nn.Dropout(p=0.5),
-                                        nn.Linear(in_features=2048, out_features=num_classes),
+                                        nn.Linear(in_features=1024, out_features=num_classes),
                                         )
 
     def forward(self, x):

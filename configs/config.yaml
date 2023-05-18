@@ -5,7 +5,10 @@ defaults:
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 5
+epochs: 10
+pseudo_epochs: 5
+num_pseudo_epochs: 1
+no_augmentation: true
 
 datamodule:
   _target_: data.datamodule.DataModule
@@ -20,14 +23,16 @@ datasetmodule:
   _target_: data.datasetmodule.DatasetModule
   train_dataset_path: ${dataset.train_path}
   train_transform: ${dataset.train_transform}
-  test_dataset_path: ${dataset.test_path}
-  test_transform: ${dataset.test_transform}
-  batch_size: 10
-  num_workers: 1
+  unlabelled_dataset_path: ${dataset.unlabelled_path}
+  unlabelled_transform: ${dataset.unlabelled_transform}
+  batch_size: ${dataset.batch_size}
+  num_workers: ${dataset.num_workers}
 
-data_dir: ${root_dir}/dataset
+data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
 checkpoint_path: ${root_dir}/checkpoints/model.pt
+checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label.pt
+wandb_name: run_pseudolabel
 
 hydra:
   run:

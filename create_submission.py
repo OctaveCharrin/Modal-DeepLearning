@@ -27,7 +27,7 @@ class TestDataset(Dataset):
         return len(self.images_list)
 
 
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(config_path="configs", config_name="config", version_base=None)
 def create_submission(cfg):
     test_loader = DataLoader(
         TestDataset(
