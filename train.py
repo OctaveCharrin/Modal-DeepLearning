@@ -54,7 +54,6 @@ def train(cfg):
             epoch_acc = epoch_num_correct / num_samples
             logger.log(
                 {
-                    "epoch": epoch,
                     "train_loss_epoch": epoch_loss,
                     "train_acc": epoch_acc,
                 }

@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import ImageFolder
 import torch
 
@@ -33,6 +33,8 @@ class DatasetModule:
         train_transform,
         unlabelled_dataset_path,
         unlabelled_transform,
+        test_dataset_path,
+        test_transform,
         batch_size,
         num_workers,
     ):
@@ -48,7 +50,26 @@ class DatasetModule:
             ],
             generator=torch.Generator().manual_seed(3407),
         )
-        self.unlabelled_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
+        # self.unlabelled_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
+
+        my_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
+        dataset_length = len(my_dataset)
+
+        # Define the number of images to extract
+        num_images = 1000
+
+        # Create an index array with shuffled indices
+        indices = torch.randperm(dataset_length)
+
+        # Take the first 'num_images' indices to extract random images
+        selected_indices = indices[:num_images]
+
+        # Create a subset of the dataset with the selected indices
+        subset_dataset = Subset(my_dataset, selected_indices)
+
+        self.unlabelled_dataset = subset_dataset
+
+        self.test_dataset = ImageFolder(test_dataset_path, transform=test_transform)
 
     def train_dataloader(self):
         return DataLoader(
@@ -69,6 +90,14 @@ class DatasetModule:
     def val_dataloader(self):
         return DataLoader(
             self.val_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )
+    
+    def test_dataloader(self):
+        return DataLoader(
+            self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

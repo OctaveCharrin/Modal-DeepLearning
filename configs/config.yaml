@@ -1,14 +1,16 @@
 defaults:
   - _self_
-  - model: resnet
+  - model: augmented_resnet
   - dataset: 10_classes_supervised
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 10
+epochs: 1
 pseudo_epochs: 5
-num_pseudo_epochs: 1
 no_augmentation: true
+batch_size: ${dataset.batch_size}
+labeled_batch_size: 62
+num_workers: ${dataset.num_workers}
 
 datamodule:
   _target_: data.datamodule.DataModule
@@ -23,8 +25,10 @@ datasetmodule:
   _target_: data.datasetmodule.DatasetModule
   train_dataset_path: ${dataset.train_path}
   train_transform: ${dataset.train_transform}
-  unlabelled_dataset_path: ${dataset.unlabelled_path}
-  unlabelled_transform: ${dataset.unlabelled_transform}
+  unlabeled_dataset_path: ${dataset.unlabeled_path}
+  unlabeled_transform: ${dataset.unlabeled_transform}
+  test_dataset_path: ${dataset.test_path}
+  test_transform: ${dataset.test_transform}
   batch_size: ${dataset.batch_size}
   num_workers: ${dataset.num_workers}
 
