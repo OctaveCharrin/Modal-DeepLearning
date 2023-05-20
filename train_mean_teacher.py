@@ -36,7 +36,8 @@ def main(cfg):
                       transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])]))
 
     dataset = torchvision.datasets.ImageFolder(cfg.datamodule.train_dataset_path, train_transform)
-
+    # Dataset must contain labeled data first and then unlabeled data
+    # Maybe try to do it with a concatanation and a unlabeled dataset from pseudo labeling
     labelled_idxs = set(range(720))
     unlabelled_idxs = set(range(720, len(dataset)))
 
@@ -47,10 +48,7 @@ def main(cfg):
                                                num_workers=cfg.num_workers,
                                                pin_memory=True)
     
-    val_loader = datamodule.test_dataloader()
-
-    # train_loader = datamodule.train_dataloader()
-    # unlabelled_loader = datamodule.unlabeled_dataloader()
+    val_loader = datamodule.val_dataloader()
 
     # Intializing the model
     model = MeanTeacherModel(cfg.model.num_classes, cfg.model.frozen, no_grad = False).to(device)
