@@ -231,9 +231,9 @@ def create_data_loaders(train_transformation,
     dataset = ConcatDataset([train_dataset, unlabeled_dataset])
 
     exclude_unlabeled = False
-    labeled_batch_size = 62
-    batch_size = 256
-    workers = 8
+    batch_size = 128
+    labeled_batch_size = int(0.25*batch_size)
+    workers = 6
 
     labeled_idxs, unlabeled_idxs = range(len(train_dataset)), range(len(train_dataset),len(dataset))
 
@@ -255,7 +255,7 @@ def create_data_loaders(train_transformation,
         eval_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2 * workers,  # Needs images twice as fast
+        num_workers=workers,  # Needs images twice as fast
         pin_memory=True,
         drop_last=False)
 
