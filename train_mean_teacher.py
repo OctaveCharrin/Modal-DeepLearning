@@ -47,7 +47,7 @@ def main(cfg):
                                                num_workers=cfg.num_workers,
                                                pin_memory=True)
     
-    val_loader = datamodule.test_dataloader()
+    val_loader = datamodule.val_dataloader()
 
     # Intializing the model
     model = MeanTeacherModel(cfg.model.num_classes, frozen=False, no_grad = False).to(device)
