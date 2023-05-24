@@ -31,8 +31,8 @@ class DatasetModule:
         self,
         train_dataset_path,
         train_transform,
-        unlabelled_dataset_path,
-        unlabelled_transform,
+        unlabeled_dataset_path,
+        unlabeled_transform,
         test_dataset_path,
         test_transform,
         batch_size,
@@ -52,7 +52,7 @@ class DatasetModule:
         )
         # self.unlabelled_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
 
-        my_dataset = UnlabelledDataset(unlabelled_dataset_path, transform=unlabelled_transform)
+        my_dataset = UnlabelledDataset(unlabeled_dataset_path, transform=unlabeled_transform)
         dataset_length = len(my_dataset)
 
         # Define the number of images to extract
@@ -67,7 +67,7 @@ class DatasetModule:
         # Create a subset of the dataset with the selected indices
         subset_dataset = Subset(my_dataset, selected_indices)
 
-        self.unlabelled_dataset = subset_dataset
+        self.unlabeled_dataset = subset_dataset
 
         self.test_dataset = ImageFolder(test_dataset_path, transform=test_transform)
 
@@ -81,7 +81,7 @@ class DatasetModule:
     
     def unlabelled_dataloader(self):
         return DataLoader(
-            self.unlabelled_dataset,
+            self.unlabeled_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

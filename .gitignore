@@ -10,3 +10,7 @@ create_test.py
 /checkpoints
 __pycache__
 submission.csv
+mean_teacher_train/results
+mean_teacher_train/train
+test.py
+testing.py

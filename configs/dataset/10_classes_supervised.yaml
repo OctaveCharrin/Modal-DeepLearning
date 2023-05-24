@@ -12,6 +12,6 @@ defaults:
 num_classes: 48
 batch_size: 240
 num_workers: 0
-train_path: ${data_dir}/train
+train_path: ${data_dir}/train_mean_teacher
 test_path: ${data_dir}/train
 unlabeled_path: ${data_dir}/unlabelled

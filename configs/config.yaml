@@ -5,7 +5,7 @@ defaults:
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 1
+epochs: 100
 pseudo_epochs: 5
 no_augmentation: true
 batch_size: ${dataset.batch_size}
@@ -36,7 +36,7 @@ data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
 checkpoint_path: ${root_dir}/checkpoints/model.pt
 checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label.pt
-wandb_name: run_pseudolabel
+wandb_name: run_mean_teacher
 
 hydra:
   run:

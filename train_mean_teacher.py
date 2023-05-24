@@ -25,7 +25,7 @@ def main(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
-    # logger = wandb.init(project="challenge", name=cfg.wandb_name)
+    logger = wandb.init(project="challenge", name=cfg.wandb_name)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     datamodule = hydra.utils.instantiate(cfg.datasetmodule)
@@ -37,8 +37,8 @@ def main(cfg):
 
     dataset = torchvision.datasets.ImageFolder(cfg.datamodule.train_dataset_path, train_transform)
 
-    labelled_idxs = set(range(720))
-    unlabelled_idxs = set(range(720, len(dataset)))
+    labelled_idxs = range(720)
+    unlabelled_idxs = range(720, len(dataset))
 
     batch_sampler = data.TwoStreamBatchSampler(unlabelled_idxs, labelled_idxs, cfg.batch_size, cfg.labeled_batch_size)
 
@@ -49,11 +49,8 @@ def main(cfg):
     
     val_loader = datamodule.test_dataloader()
 
-    # train_loader = datamodule.train_dataloader()
-    # unlabelled_loader = datamodule.unlabeled_dataloader()
-
     # Intializing the model
-    model = MeanTeacherModel(cfg.model.num_classes, cfg.model.frozen, no_grad = False).to(device)
+    model = MeanTeacherModel(cfg.model.num_classes, frozen=False, no_grad = False).to(device)
     ema_model = MeanTeacherModel(cfg.model.num_classes, cfg.model.frozen, no_grad = True).to(device)
     
     optimizer = torch.optim.SGD(model.parameters(), 1e-5,
@@ -61,15 +58,23 @@ def main(cfg):
                                 weight_decay=1e-4)
 
     for epoch in tqdm(range(cfg.epochs)):
-        train(cfg, train_loader, model, ema_model, optimizer, epoch, device)
+        running_loss = train(cfg, train_loader, model, ema_model, optimizer, epoch, device)
 
         prec1 = validate(val_loader, model, device)
         ema_prec1 = validate(val_loader, ema_model, device)
 
+        print("loss: ", running_loss)
         print('Accuracy of the Student network on the test images: %d %%' % (
             prec1))
         print('Accuracy of the Teacher network on the test images: %d %%' % (
             ema_prec1))
+        
+        logger.log({
+            "epoch":epoch,
+            "loss":running_loss,
+            "student acc": prec1,
+            "teacher acc": ema_prec1
+        })
 
 
 def update_ema_variables(model, ema_model, alpha, global_step):
@@ -90,13 +95,12 @@ def train(cfg, train_loader, model, ema_model, optimizer, epoch, device):
     model.train()
     ema_model.train()
 
-    for i, ((input, ema_input), target) in tqdm(enumerate(train_loader)):
+    for i, ((input, ema_input), target) in enumerate(train_loader):
 
         if (input.size(0) != cfg.batch_size):
             continue
 
         input_var = input.to(device)
-
         target_var = target.to(device)
 
         minibatch_size = len(target_var)

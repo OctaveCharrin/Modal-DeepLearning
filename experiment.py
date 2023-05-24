@@ -19,33 +19,37 @@ def main(cfg):
     datamodule = hydra.utils.instantiate(cfg.datamodule)
     train_data = datamodule.train_dataset
 
+    val_loader = datamodule.val_dataloader()
+
     model = hydra.utils.instantiate(cfg.model)
 
-    for i, batch in enumerate(dataloader):
+    for i, batch in enumerate(val_loader):
         if i == 1:
             break
         images, labels = batch
-        pred = model(images)
-        pred = torch.softmax(pred, dim=1)
+        images.cuda()
+        print("ook")
+    #     pred = model(images)
+    #     pred = torch.softmax(pred, dim=1)
 
-        print('preds', pred)
+    #     print('preds', pred)
 
-        max_prob, predicted = torch.max(pred, dim=1)
+    #     max_prob, predicted = torch.max(pred, dim=1)
 
-        print('max', max_prob)
-        print('mask', max_prob > 0.5)
-        print('predicted', predicted)
+    #     print('max', max_prob)
+    #     print('mask', max_prob > 0.5)
+    #     print('predicted', predicted)
 
-    data = TensorDataset(images, predicted)
+    # data = TensorDataset(images, predicted)
 
-    print(data[0])
+    # print(data[0])
 
-    data = ConcatDataset([data,train_data])
+    # data = ConcatDataset([data,train_data])
 
-    new_dataloader = DataLoader(dataset=data, batch_size = 100, shuffle=True)
-    for i, batch in enumerate(new_dataloader):
-        if i ==15:break
-        print("ok")
+    # new_dataloader = DataLoader(dataset=data, batch_size = 100, shuffle=True)
+    # for i, batch in enumerate(new_dataloader):
+    #     if i ==15:break
+    #     print("ok")
 
 
     
