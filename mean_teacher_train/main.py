@@ -37,6 +37,10 @@ args = None
 best_prec1 = 0
 global_step = 0
 
+batch_size = 64
+labeled_batch_size = int(0.25*batch_size)
+workers = 6
+
 
 def main(context):
     global global_step
@@ -218,6 +222,7 @@ def create_data_loaders(train_transformation,
                         eval_transformation,
                         datadir,
                         num_classes):
+    global batch_size, labeled_batch_size, workers
     traindir = os.path.join(datadir, "train_val")
     evaldir = os.path.join(datadir, "val_train")
 
@@ -231,9 +236,6 @@ def create_data_loaders(train_transformation,
     dataset = ConcatDataset([train_dataset, unlabeled_dataset])
 
     exclude_unlabeled = False
-    batch_size = 64
-    labeled_batch_size = int(0.25*batch_size)
-    workers = 6
 
     labeled_idxs, unlabeled_idxs = range(len(train_dataset)), range(len(train_dataset),len(dataset))
 
