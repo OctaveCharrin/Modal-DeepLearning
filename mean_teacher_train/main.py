@@ -231,9 +231,9 @@ def create_data_loaders(train_transformation,
     dataset = ConcatDataset([train_dataset, unlabeled_dataset])
 
     exclude_unlabeled = False
-    labeled_batch_size = 2
-    batch_size = 10
-    workers = 0
+    labeled_batch_size = 62
+    batch_size = 256
+    workers = 8
 
     labeled_idxs, unlabeled_idxs = range(len(train_dataset)), range(len(train_dataset),len(dataset))
 
