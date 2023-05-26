@@ -39,7 +39,7 @@ data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
 checkpoint_path: ${root_dir}/checkpoints/clip32_simple_finetune_10epochs.pt
 checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label_clip_list.pt
-wandb_name: run_clip_list
+wandb_name: run_clip_finetune
 
 hydra:
   run:

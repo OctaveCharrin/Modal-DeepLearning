@@ -6,19 +6,26 @@ import clip
 from timm.data.auto_augment import rand_augment_transform
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
 
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
 
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
-    # os.environ['WANDB_MODE'] = 'offline'
+    os.environ['WANDB_MODE'] = 'offline'
 
-    logger = wandb.init(project="challenge", name="run")
+    logger = wandb.init(project="challenge", name=cfg.wandb_name)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     loss_fn = hydra.utils.instantiate(cfg.loss_fn)
     datamodule = hydra.utils.instantiate(cfg.datamodule)
+
+    simple_transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                transforms.ToTensor(),
+            ])
 
     train_dataset = datamodule.train_dataset
     class_to_idx = datamodule.dataset.class_to_idx
@@ -27,8 +34,8 @@ def train(cfg):
     for  (class_name, index) in class_to_idx.items():
         class_list[index] = class_name
     
-    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5')
-    train_dataset.transform = rand_aug
+    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5',hparams={'img_mean': (0.485, 0.456, 0.406)})
+    train_dataset.transform = transforms.Compose([simple_transform, rand_aug])
     
     train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
     val_loader = datamodule.val_dataloader()
