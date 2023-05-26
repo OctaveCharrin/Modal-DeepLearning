@@ -70,8 +70,7 @@ class AugmentationTransforms:
 
 
     def toList(self):
-        augmentList = [self.simple,
-                       self.random_crop_small,
+        augmentList = [self.random_crop_small,
                        self.random_crop_big,
                        self.random_erasing,
                        self.horizontal_flip,

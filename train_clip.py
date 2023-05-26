@@ -18,7 +18,7 @@ from augments.addgaussiannoise import AddGaussianNoise
 def train(cfg):
 
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
-    os.environ['WANDB_MODE'] = 'offline'
+    # os.environ['WANDB_MODE'] = 'offline'
 
     learning_rate = 1e-7
     aug_num = 3
