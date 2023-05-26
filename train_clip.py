@@ -125,8 +125,8 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        path = os.getcwd() + f"/checkpoints/freezeclip_training_checkpoint{epoch}.pt"
-        torch.save(model.state_dict(), path)
+        checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+        torch.save(model.state_dict(), os.path.join(checkpoints_path, f'frozenclip_checkpoint_epoch_{epoch}.pt'))
 
         for _, batch in enumerate(val_loader):
             images, labels = batch
