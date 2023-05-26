@@ -6,8 +6,7 @@ import clip
 from timm.data.auto_augment import rand_augment_transform
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from augments.augmentationtransforms import AugmentationTransforms
-from transformers import CLIPProcessor, CLIPModel
+
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
@@ -28,7 +27,7 @@ def train(cfg):
     for  (class_name, index) in class_to_idx.items():
         class_list[index] = class_name
     
-    rand_aug = rand_augment_transform('rand-m9-n3--mstd0.5')
+    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5')
     train_dataset.transform = rand_aug
     
     train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
