@@ -3,6 +3,7 @@ import wandb
 import hydra
 import os
 import clip
+import torch.optim as optim
 from timm.data.auto_augment import rand_augment_transform
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -14,6 +15,8 @@ def train(cfg):
 
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     os.environ['WANDB_MODE'] = 'offline'
+
+    learning_rate = 1e-7
 
     logger = wandb.init(project="challenge", name=cfg.wandb_name)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,7 +38,7 @@ def train(cfg):
         class_list[index] = class_name
     
     rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5',hparams={'img_mean': (0.485, 0.456, 0.406)})
-    train_dataset.transform = transforms.Compose([simple_transform, rand_aug])
+    train_dataset.transform.insert(0, rand_aug)
     
     train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
     val_loader = datamodule.val_dataloader()
@@ -46,19 +49,21 @@ def train(cfg):
     # model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
     # processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-    model = model.float()
-    # print(model)
-    # print(len(model.parameters()))
+    model.float()
+    
+    for name, param in model.named_parameters():
+        if name.startswith('transfomer'):
+            param.requires_grad = False
 
-
+    # interval = range(250, 1000)
     # for i, params in enumerate(model.parameters()):
-    #     print(i)
-    #     if i<=250:
+    #     if i in interval:
     #         params.requires_grad = False
 
     text = clip.tokenize(class_list).to(device)
 
-    optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+    # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
 
     for epoch in tqdm(range(cfg.epochs)):
         epoch_loss = 0
@@ -93,6 +98,9 @@ def train(cfg):
         epoch_loss = 0
         epoch_num_correct = 0
         num_samples = 0
+
+        path = os.getcwd() + f"/checkpoints/clip_training_checkpoint{epoch}.pt"
+        torch.save(model.state_dict(), path)
 
         for _, batch in enumerate(val_loader):
             images, labels = batch

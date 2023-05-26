@@ -5,7 +5,7 @@ defaults:
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 20
+epochs: 5
 pseudo_epochs: 15
 num_pseudo_epochs: 5
 list_pseudo_epochs: [4,4,4,4,5,5,5,6,6,7,7,8,9,10,10]
@@ -37,7 +37,7 @@ datasetmodule:
 
 data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
-checkpoint_path: ${root_dir}/checkpoints/clip32_simple_finetune_10epochs.pt
+checkpoint_path: ${root_dir}/checkpoints/clip32_transfrozen_finetune_15epochs.pt
 checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label_clip_list.pt
 wandb_name: run_clip_finetune
 
