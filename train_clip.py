@@ -30,10 +30,10 @@ def train(cfg):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 transforms.ToTensor(),
             ])
-    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5',hparams={'img_mean': (0.485, 0.456, 0.406), 'img_std':(0.229, 0.224, 0.225)})
+    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5', hparams={'img_mean': (0.485, 0.456, 0.406), 'img_std':(0.229, 0.224, 0.225)})
 
-    traindir = os.getcwd() + '/datasetV2/train_val'
-    valdir = os.getcwd() + '/datasetV2/val_train'
+    traindir = os.path.join(cfg.data_dir, 'train_val')
+    valdir = os.path.join(cfg.data_dir, 'val_train')
 
     train_dataset = ImageFolder(traindir, transform=rand_aug)
     val_dataset = ImageFolder(valdir, transform=simple_transform)
