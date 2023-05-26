@@ -4,11 +4,14 @@ import hydra
 import os
 import clip
 import torch.optim as optim
-from timm.data.auto_augment import rand_augment_transform
+import numpy as np
+# from timm.data.auto_augment import rand_augment_transform
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms
+from augments.augmentationtransforms import AugmentationTransforms
+from augments.addgaussiannoise import AddGaussianNoise
 
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
@@ -18,6 +21,7 @@ def train(cfg):
     os.environ['WANDB_MODE'] = 'offline'
 
     learning_rate = 1e-7
+    aug_num = 3
 
     logger = wandb.init(project="challenge", name=cfg.wandb_name)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,17 +29,29 @@ def train(cfg):
     loss_fn = hydra.utils.instantiate(cfg.loss_fn)
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
+    augments = AugmentationTransforms().toList()
+
+    # augments = [
+    #     transforms.Compose([transforms.RandomCrop((180,180)),transforms.Resize((224,224))]),
+    #     transforms.Compose([transforms.RandomCrop((300,300), pad_if_needed=True),transforms.Resize((224,224))]),
+    #     transforms.Compose(5*[transforms.RandomErasing(p=.75, scale=(0.01, 0.05), ratio=(0.5, 1.5))]),
+    #     transforms.RandomHorizontalFlip(p=0.5),
+    #     transforms.RandomVerticalFlip(p=0.5),
+    #     transforms.Compose([AddGaussianNoise(mean=0.0, std=0.2),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+    #     transforms.Compose([transforms.RandomRotation(degrees=180,expand=True),transforms.Resize((224,224))])
+    #     ]
+
     simple_transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 transforms.ToTensor(),
+                transforms.Resize((224, 224),antialias=None),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
-    rand_aug = rand_augment_transform(config_str='rand-m9-n3--mstd0.5', hparams={'img_mean': (0.485, 0.456, 0.406), 'img_std':(0.229, 0.224, 0.225)})
+
 
     traindir = os.path.join(cfg.data_dir, 'train_val')
     valdir = os.path.join(cfg.data_dir, 'val_train')
 
-    train_dataset = ImageFolder(traindir, transform=rand_aug)
+    train_dataset = ImageFolder(traindir, transform=simple_transform)
     val_dataset = ImageFolder(valdir, transform=simple_transform)
     class_to_idx = train_dataset.class_to_idx
 
@@ -44,7 +60,7 @@ def train(cfg):
         class_list[index] = class_name
     
     
-    train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+    
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
 
     model, preprocess = clip.load("ViT-B/32", device=device)
@@ -73,6 +89,12 @@ def train(cfg):
         epoch_loss = 0
         epoch_num_correct = 0
         num_samples = 0
+
+        sampled_ops = np.random.choice(augments, aug_num)
+        sampled_aug = transforms.Compose(sampled_ops)
+        train_augment = transforms.Compose([simple_transform,sampled_aug])
+        train_dataset.transform = train_augment
+        train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
         for _, batch in enumerate(train_loader):
             images, labels = batch
