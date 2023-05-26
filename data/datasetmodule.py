@@ -67,7 +67,8 @@ class DatasetModule:
         # Create a subset of the dataset with the selected indices
         subset_dataset = Subset(my_dataset, selected_indices)
 
-        self.unlabeled_dataset = subset_dataset
+        self.unlabeled_dataset = my_dataset
+        self.subset_dataset = subset_dataset
 
         self.test_dataset = ImageFolder(test_dataset_path, transform=test_transform)
 
@@ -82,7 +83,7 @@ class DatasetModule:
     def unlabelled_dataloader(self):
         return DataLoader(
             self.unlabeled_dataset,
-            batch_size=self.batch_size,
+            batch_size=256,
             shuffle=False,
             num_workers=self.num_workers,
         )
@@ -98,6 +99,14 @@ class DatasetModule:
     def test_dataloader(self):
         return DataLoader(
             self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )
+    
+    def subset_dataloader(self):
+        return DataLoader(
+            self.subset_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

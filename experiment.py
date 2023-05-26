@@ -11,6 +11,8 @@ from augments.augmentationtransforms import AugmentationTransforms
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def main(cfg):
+
+
     unlabelled_transform = hydra.utils.instantiate(cfg.datamodule.train_transform)
     unlabelled_dataset = UnlabelledDataset(cfg.datasetmodule.unlabeled_dataset_path, transform=unlabelled_transform)
 
@@ -21,14 +23,14 @@ def main(cfg):
 
     val_loader = datamodule.val_dataloader()
 
-    model = hydra.utils.instantiate(cfg.model)
+    # model = hydra.utils.instantiate(cfg.model)
 
-    for i, batch in enumerate(val_loader):
-        if i == 1:
-            break
-        images, labels = batch
-        images.cuda()
-        print("ook")
+    # for i, batch in enumerate(val_loader):
+    #     if i == 1:
+    #         break
+    #     images, labels = batch
+    #     images.cuda()
+    #     print("ook")
     #     pred = model(images)
     #     pred = torch.softmax(pred, dim=1)
 

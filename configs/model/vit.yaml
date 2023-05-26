@@ -1,0 +1,3 @@
+_target_: models.vit16.ViTModel
+num_classes: ${dataset.num_classes}
+frozen: True

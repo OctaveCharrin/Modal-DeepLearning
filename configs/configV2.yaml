@@ -1,19 +1,18 @@
 defaults:
   - _self_
-  - model: resnet
+  - model: vit
   - dataset: 10_classes_supervised
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 20
+epochs: 8
 pseudo_epochs: 15
 num_pseudo_epochs: 5
-list_pseudo_epochs: [4,4,4,4,5,5,5,6,6,7,7,8,9,10,10]
+list_pseudo_epochs: [4,4,5,5,6,6,7,7,8,9,10,11,12,15,25]
 no_augmentation: true
 batch_size: ${dataset.batch_size}
 labeled_batch_size: 62
 num_workers: ${dataset.num_workers}
-resume: true
 
 datamodule:
   _target_: data.datamodule.DataModule
@@ -37,9 +36,9 @@ datasetmodule:
 
 data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
-checkpoint_path: ${root_dir}/checkpoints/clip32_simple_finetune_10epochs.pt
+checkpoint_path: ${root_dir}/checkpoints/model_clip_list.pt
 checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label_clip_list.pt
-wandb_name: run_clip_list
+wandb_name: run_clip_list_vit
 
 hydra:
   run:

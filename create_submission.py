@@ -4,6 +4,7 @@ import os
 from PIL import Image
 import pandas as pd
 import torch
+import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -39,25 +40,30 @@ def create_submission(cfg):
     )
     # Load model and checkpoint
     model = hydra.utils.instantiate(cfg.model).to(device)
-    checkpoint = torch.load(cfg.checkpoint_path)
+
+    path = "C:/Users/octav/Desktop/ChallengeModal/Modal-DeepLearning/checkpoints/24-05-2023-model_clip_list_checkpoit2.pt"
+
+    checkpoint = torch.load(path)
     model.load_state_dict(checkpoint)
     class_names = sorted(os.listdir(cfg.dataset.train_path))
+    model.eval()
 
     # Create submission.csv
     submission = pd.DataFrame(columns=["id", "label"])
 
-    for i, batch in enumerate(test_loader):
-        images, image_names = batch
-        images = images.to(device)
-        preds = model(images)
-        preds = preds.argmax(1)
-        preds = [class_names[pred] for pred in preds.cpu().numpy()]
-        submission = pd.concat(
-            [
-                submission,
-                pd.DataFrame({"id": image_names, "label": preds}),
-            ]
-        )
+    with torch.no_grad():
+        for i, batch in tqdm(enumerate(test_loader)):
+            images, image_names = batch
+            images = images.to(device)
+            preds = model(images)
+            preds = preds.argmax(1)
+            preds = [class_names[pred] for pred in preds.cpu().numpy()]
+            submission = pd.concat(
+                [
+                    submission,
+                    pd.DataFrame({"id": image_names, "label": preds}),
+                ]
+            )
     submission.to_csv(f"{cfg.root_dir}/submission.csv", index=False)
 
 

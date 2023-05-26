@@ -10,8 +10,8 @@ defaults:
   # - random_rotation: random_rotation
 
 num_classes: 48
-batch_size: 240
-num_workers: 0
-train_path: ${data_dir}/train_mean_teacher
+batch_size: 64
+num_workers: 6
+train_path: ${data_dir}/train
 test_path: ${data_dir}/train
 unlabeled_path: ${data_dir}/unlabelled

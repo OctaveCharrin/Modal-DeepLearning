@@ -16,9 +16,20 @@ from torch.autograd import Variable, Function
 
 from .utils import export, parameter_count
 
+class DinoModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.backbone = torch.hub.load('facebookresearch/dino:main', 'dino_vitb16')
+        self.classifier = nn.Sequential(nn.Linear(in_features=768, out_features=48))
+
+    def forward(self, x):
+        x = self.backbone(x)
+        x = self.classifier(x)
+        return x
+
 @export
 def dino(pretrained=True, **kwargs):
-    model = torch.hub.load('facebookresearch/dino:main', 'dino_vitb16')
+    model = DinoModel()
     return model
 
 @export

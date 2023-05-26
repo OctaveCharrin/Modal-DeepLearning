@@ -17,7 +17,7 @@ def test(cfg):
     model.eval()
 
     print("creating dataloader...")
-    datasetmodule = hydra.utils.instantiate(cfg.datasetmodule)
+    datasetmodule = hydra.utils.instantiate(cfg.datamodule)
     test_loader = datasetmodule.train_dataloader()
     print("done.")
 

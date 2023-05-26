@@ -20,7 +20,7 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 from PIL import Image
 from torch.autograd import Variable
-from torch.utils.data import DataLoader, Dataset, ConcatDataset
+from torch.utils.data import DataLoader, Dataset, ConcatDataset, Subset
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 import torchvision.datasets
 import torchvision.transforms as transforms
@@ -37,9 +37,9 @@ args = None
 best_prec1 = 0
 global_step = 0
 
-batch_size = 64
+batch_size = 10
 labeled_batch_size = int(0.25*batch_size)
-workers = 6
+workers = 0
 
 
 def main(context):
@@ -232,6 +232,7 @@ def create_data_loaders(train_transformation,
     eval_dataset = torchvision.datasets.ImageFolder(evaldir, transform=eval_transformation)
     
     unlabeled_dataset = data.UnlabelledDataset(os.path.join(datadir, "unlabelled"), transform = train_transformation)
+    unlabeled_dataset = Subset(unlabeled_dataset, range(500))
 
     dataset = ConcatDataset([train_dataset, unlabeled_dataset])
 
@@ -447,8 +448,8 @@ def validate(eval_loader, model, log, global_step, epoch):
             meters.update('labeled_minibatch_size', labeled_minibatch_size)
 
             # compute output
-            output1, output2 = model(input_var)
-            softmax1, softmax2 = F.softmax(output1, dim=1), F.softmax(output2, dim=1)
+            output1 = model(input_var)
+            softmax1 = F.softmax(output1, dim=1)
             class_loss = class_criterion(output1, target_var) / minibatch_size
 
             # measure accuracy and record loss
