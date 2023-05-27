@@ -5,7 +5,7 @@ defaults:
   - optim: adamw
   - loss_fn: cross_entropy
 
-epochs: 50
+epochs: 100
 pseudo_epochs: 15
 num_pseudo_epochs: 5
 list_pseudo_epochs: [4,4,4,4,5,5,5,6,6,7,7,8,9,10,10]

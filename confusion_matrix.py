@@ -29,10 +29,10 @@ def main(cfg):
 
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
-    model, preprocess = clip.load("ViT-B/32", device=device)
-    # model, preprocess = clip.load("ViT-B/16", device=device)
+    # model, preprocess = clip.load("ViT-B/32", device=device)
+    model, preprocess = clip.load("ViT-B/16", device=device)
 
-    fname = 'BEST_run_clip32_wd1e3_simple_mlpunfroz_namechangev1_chckpt_30'
+    fname = 'BEST_run_clip16_wd1e3_simple_mlpunfroz_namechangev1_chckpt_final'
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')

@@ -24,10 +24,10 @@ def train(cfg):
     learning_rate = 1e-7
     wd = 1000
     aug_num = 3
-    final = False
+    final = True
     resume = False
     numcheck = 5
-    wandbname = 'run_clip16_wd1e3_simple_mlpunfroz_namechangev1'
+    wandbname = 'FINAL_clip16_wd1e3_simple_mlpunfroz'
 
     name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
                         'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
@@ -46,6 +46,8 @@ def train(cfg):
                         'veloute' : 'a veloute soup in a cup',
                         'vintage' : 'a vintage building or castle',
                         'zinfandel' : 'red wine glass or bottle'}
+    
+    name_changer = {}
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -174,6 +176,7 @@ def train(cfg):
         if epoch%numcheck == 0 and not final:
             checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
             torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_{epoch}.pt'))
+
 
         for _, batch in enumerate(val_loader):
             images, labels = batch
