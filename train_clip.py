@@ -20,7 +20,7 @@ def train(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
-    wandbname = 'RESUME_clip16_wd10_simple_allmlpunfrozen'
+    wandbname = 'run_clip16_wd10_simple_allmlpunfrozen'
     learning_rate = 1e-7
     wd = 10
     aug_num = 3
@@ -85,11 +85,10 @@ def train(cfg):
 
     # model, preprocess = clip.load("ViT-B/32", device=device)
     model, preprocess = clip.load("ViT-B/16", device=device)
-    # model, preprocess = clip.load("ViT-L/14", device=device)
 
     if resume :
         checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        path = os.path.join(checkpoints_path, 'run_clip16_wd1_simple_allmlpunfrozen_checkpoint_final.pt')
+        path = os.path.join(checkpoints_path, 'heckpoint_final.pt')
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint)
 
@@ -152,7 +151,7 @@ def train(cfg):
 
         if epoch%numcheck == 0 and not final:
             checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-            torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_checkpoint_epoch_{epoch}.pt'))
+            torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_{epoch}.pt'))
 
         for _, batch in enumerate(val_loader):
             images, labels = batch
@@ -176,7 +175,7 @@ def train(cfg):
             }
         )
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-    torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_checkpoint_final.pt'))
+    torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_final.pt'))
     wandb.finish()
 
 
