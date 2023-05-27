@@ -44,7 +44,7 @@ def create_submission(cfg):
     model, preprocess = clip.load("ViT-B/16", device=device)
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-    path = os.path.join(checkpoints_path, 'FINAL_clip16_simple_finetune_mlpunfrozen_checkpoint_epoch_42.pt')
+    path = os.path.join(checkpoints_path, 'RESUME_clip16_simple_finetune_mlpunfrozen_checkpoint_epoch_6.pt')
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint)
     class_names = sorted(os.listdir(cfg.dataset.train_path))
