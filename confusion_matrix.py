@@ -29,9 +29,10 @@ def main(cfg):
 
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
-    model, preprocess = clip.load("ViT-B/16", device=device)
+    model, preprocess = clip.load("ViT-B/32", device=device)
+    # model, preprocess = clip.load("ViT-B/16", device=device)
 
-    fname = 'RESUME_clip16_wd10_simple_allmlpunfrozen_checkpoint_final'
+    fname = 'BEST_run_clip32_wd1e3_simple_mlpunfroz_namechangev1_chckpt_30'
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')
@@ -42,9 +43,35 @@ def main(cfg):
 
     class_to_idx = val_dataset.class_to_idx
 
+    name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
+                        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+                        'bearberry' : 'a red bearberry fruit',
+                        'brick red' : 'a red brick house or landscape',
+                        'carbine' : 'a carbine pistol weapon',
+                        'ceriman' : 'a green ceriman fruit or landscape',
+                        'couscous' : 'an oriental couscous',
+                        'flash' : 'rainbow flash room',
+                        'florist' : 'florist flowers',
+                        'kingfish' : 'a kingfish fish',
+                        'organ loft' : 'church organ loft',
+                        'peahen' : 'a peahen bird',
+                        'plunge' : 'pool water plunge',
+                        'silkworm' : 'a worm',
+                        'veloute' : 'a veloute soup in a cup',
+                        'vintage' : 'a vintage building or castle',
+                        'zinfandel' : 'red wine glass or bottle'}
+                        
+    # name_changer = {}
+
     class_list = list(range(48))
     for  (class_name, index) in class_to_idx.items():
-        class_list[index] = class_name.lower()
+        class_name = class_name.lower()
+        if class_name in name_changer.keys():
+            class_list[index] = name_changer[class_name]
+        else:
+            class_list[index] = class_name
+
+    
     text = clip.tokenize(class_list).to(device)
 
     # Initialize empty lists for predictions and labels
@@ -104,7 +131,7 @@ def save_confmat(matrix, class_dict, fname):
     plt.savefig(fname)
 
 def save_txt_file(path, matrix, class_names,fname):
-    my_dict = {'matrix':matrix, 'class_dict':class_names, 'fname':fname}
+    my_dict = {'matrix':matrix.tolist(), 'class_dict':list(class_names), 'fname':fname}
     with open(path, 'w') as file:
         json.dump(my_dict, file)
 

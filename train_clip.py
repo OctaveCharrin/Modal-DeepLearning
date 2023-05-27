@@ -20,14 +20,32 @@ def train(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
-    wandbname = 'run_clip16_wd10_simple_allmlpunfrozen'
+    
     learning_rate = 1e-7
-    wd = 10
+    wd = 1000
     aug_num = 3
     final = False
     resume = False
     numcheck = 5
+    wandbname = 'run_clip16_wd1e3_simple_mlpunfroz_namechangev1'
 
+    name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
+                        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+                        'bearberry' : 'a red bearberry fruit',
+                        'brick red' : 'a red brick house or landscape',
+                        'carbine' : 'a carbine pistol weapon',
+                        'ceriman' : 'a green ceriman fruit or landscape',
+                        'couscous' : 'an oriental couscous',
+                        'flash' : 'rainbow flash room',
+                        'florist' : 'florist flowers',
+                        'kingfish' : 'a kingfish fish',
+                        'organ loft' : 'church organ loft',
+                        'peahen' : 'a peahen bird',
+                        'plunge' : 'pool water plunge',
+                        'silkworm' : 'a worm',
+                        'veloute' : 'a veloute soup in a cup',
+                        'vintage' : 'a vintage building or castle',
+                        'zinfandel' : 'red wine glass or bottle'}
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -76,7 +94,11 @@ def train(cfg):
 
     class_list = list(range(48))
     for  (class_name, index) in class_to_idx.items():
-        class_list[index] = class_name
+        class_name = class_name.lower()
+        if class_name in name_changer.keys():
+            class_list[index] = name_changer[class_name]
+        else:
+            class_list[index] = class_name
 
     
     logger = wandb.init(project="challenge", name=wandbname)

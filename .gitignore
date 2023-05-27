@@ -15,3 +15,5 @@ test.py
 testing.py
 /clip_test
 file.txt
+*.txt
+*.jpg
