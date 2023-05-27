@@ -18,7 +18,7 @@ from augments.addgaussiannoise import AddGaussianNoise
 def train(cfg):
 
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
-    # os.environ['WANDB_MODE'] = 'offline'
+    os.environ['WANDB_MODE'] = 'offline'
 
     learning_rate = 1e-7
     aug_num = 3
@@ -63,16 +63,23 @@ def train(cfg):
     
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
 
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    # model, preprocess = clip.load("ViT-B/32", device=device)
     # model, preprocess = clip.load("ViT-B/16", device=device)
-    # model, preprocess = clip.load("ViT-L/14", device=device)
+    model, preprocess = clip.load("ViT-L/14", device=device)
     # model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
     # processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
     model.float()
 
+    # for name, param in model.named_parameters():
+    #     print(name)
+    #     if name.startswith('transfomer'):
+    #         param.requires_grad = False
+
     for name, param in model.named_parameters():
-        if name.startswith('transfomer'):
+        if ('mlp' in name) and (name.startswith('visual')):
+            continue
+        else:
             param.requires_grad = False
 
     # interval = range(250, 1000)
@@ -126,7 +133,7 @@ def train(cfg):
         num_samples = 0
 
         checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        torch.save(model.state_dict(), os.path.join(checkpoints_path, f'frozenclip_checkpoint_epoch_{epoch}.pt'))
+        torch.save(model.state_dict(), os.path.join(checkpoints_path, f'frozenclip14_checkpoint_epoch_{epoch}.pt'))
 
         for _, batch in enumerate(val_loader):
             images, labels = batch

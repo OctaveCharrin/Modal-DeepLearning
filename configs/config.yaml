@@ -37,7 +37,7 @@ datasetmodule:
 
 data_dir: ${root_dir}/datasetV2
 root_dir:  ${hydra:runtime.cwd}
-checkpoint_path: ${root_dir}/checkpoints/clip32_transfrozen_finetune_15epochs.pt
+checkpoint_path: ${root_dir}/checkpoints/clip14_frozen_finetune_20epochs.pt
 checkpoint_before_pseudo_path: ${root_dir}/checkpoints/model_before_pseudo_label_clip_list.pt
 wandb_name: run_clip_finetune
 
