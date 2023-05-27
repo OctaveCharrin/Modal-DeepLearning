@@ -4,7 +4,8 @@ import os
 from PIL import Image
 import pandas as pd
 import torch
-import tqdm
+from tqdm import tqdm
+import clip
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -39,13 +40,17 @@ def create_submission(cfg):
         num_workers=cfg.dataset.num_workers,
     )
     # Load model and checkpoint
-    model = hydra.utils.instantiate(cfg.model).to(device)
+    # model = hydra.utils.instantiate(cfg.model).to(device)
+    model, preprocess = clip.load("ViT-B/32", device=device)
 
-    path = "C:/Users/octav/Desktop/ChallengeModal/Modal-DeepLearning/checkpoints/24-05-2023-model_clip_list_checkpoit2.pt"
-
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    path = os.path.join(checkpoints_path, 'frozenclip_checkpoint_epoch_13.pt')
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint)
     class_names = sorted(os.listdir(cfg.dataset.train_path))
+
+    text = clip.tokenize(class_names).to(device)
+
     model.eval()
 
     # Create submission.csv
@@ -55,7 +60,7 @@ def create_submission(cfg):
         for i, batch in tqdm(enumerate(test_loader)):
             images, image_names = batch
             images = images.to(device)
-            preds = model(images)
+            preds, _ = model(images, text)
             preds = preds.argmax(1)
             preds = [class_names[pred] for pred in preds.cpu().numpy()]
             submission = pd.concat(
