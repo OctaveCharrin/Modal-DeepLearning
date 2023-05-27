@@ -35,16 +35,16 @@ def create_submission(cfg):
         TestDataset(
             cfg.dataset.test_path, hydra.utils.instantiate(cfg.dataset.test_transform)
         ),
-        batch_size=cfg.dataset.batch_size,
+        batch_size=256,
         shuffle=False,
         num_workers=cfg.dataset.num_workers,
     )
     # Load model and checkpoint
     # model = hydra.utils.instantiate(cfg.model).to(device)
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    model, preprocess = clip.load("ViT-B/16", device=device)
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-    path = os.path.join(checkpoints_path, 'frozenclip_checkpoint_epoch_13.pt')
+    path = os.path.join(checkpoints_path, 'FINAL_clip16_simple_finetune_mlpunfrozen_checkpoint_epoch_42.pt')
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint)
     class_names = sorted(os.listdir(cfg.dataset.train_path))

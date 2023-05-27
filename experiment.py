@@ -1,27 +1,28 @@
 import torch
-import wandb
-import hydra
-import os
-from tqdm import tqdm
-from PIL import Image
-from torch.utils.data import Dataset, DataLoader, TensorDataset, ConcatDataset
-from torchvision.datasets import DatasetFolder
-from augments.augmentationtransforms import AugmentationTransforms
+# import wandb
+# import hydra
+# import os
+# from tqdm import tqdm
+# from PIL import Image
+# from torch.utils.data import Dataset, DataLoader, TensorDataset, ConcatDataset
+# from torchvision.datasets import DatasetFolder
+# from augments.augmentationtransforms import AugmentationTransforms
 
 
-@hydra.main(config_path="configs", config_name="config", version_base=None)
-def main(cfg):
+# @hydra.main(config_path="configs", config_name="config", version_base=None)
+def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
 
+    # unlabelled_transform = hydra.utils.instantiate(cfg.datamodule.train_transform)
+    # unlabelled_dataset = UnlabelledDataset(cfg.datasetmodule.unlabeled_dataset_path, transform=unlabelled_transform)
 
-    unlabelled_transform = hydra.utils.instantiate(cfg.datamodule.train_transform)
-    unlabelled_dataset = UnlabelledDataset(cfg.datasetmodule.unlabeled_dataset_path, transform=unlabelled_transform)
+    # dataloader = DataLoader(unlabelled_dataset, batch_size=8, shuffle = False)
 
-    dataloader = DataLoader(unlabelled_dataset, batch_size=8, shuffle = False)
+    # datamodule = hydra.utils.instantiate(cfg.datamodule)
+    # train_data = datamodule.train_dataset
 
-    datamodule = hydra.utils.instantiate(cfg.datamodule)
-    train_data = datamodule.train_dataset
-
-    val_loader = datamodule.val_dataloader()
+    # val_loader = datamodule.val_dataloader()
 
     # model = hydra.utils.instantiate(cfg.model)
 
@@ -61,23 +62,23 @@ def main(cfg):
 
 
 
-class UnlabelledDataset(Dataset):
-    def __init__(self, folder_path, transform=None):
-        self.folder_path = folder_path
-        self.file_list = os.listdir(folder_path)
-        self.transform = transform
+# class UnlabelledDataset(Dataset):
+#     def __init__(self, folder_path, transform=None):
+#         self.folder_path = folder_path
+#         self.file_list = os.listdir(folder_path)
+#         self.transform = transform
     
-    def __len__(self):
-        return len(self.file_list)
+#     def __len__(self):
+#         return len(self.file_list)
     
-    def __getitem__(self, index):
-        image_path = os.path.join(self.folder_path, self.file_list[index])
-        image = Image.open(image_path).convert("RGB")
+#     def __getitem__(self, index):
+#         image_path = os.path.join(self.folder_path, self.file_list[index])
+#         image = Image.open(image_path).convert("RGB")
         
-        if self.transform:
-            image = self.transform(image)
+#         if self.transform:
+#             image = self.transform(image)
         
-        return image, -1
+#         return image, -1
     
 
 

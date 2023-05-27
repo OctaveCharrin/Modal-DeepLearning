@@ -18,12 +18,12 @@ from augments.addgaussiannoise import AddGaussianNoise
 def train(cfg):
 
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
-    os.environ['WANDB_MODE'] = 'offline'
+    # os.environ['WANDB_MODE'] = 'offline'
 
     learning_rate = 1e-7
     aug_num = 3
 
-    logger = wandb.init(project="challenge", name=cfg.wandb_name)
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     loss_fn = hydra.utils.instantiate(cfg.loss_fn)
@@ -41,6 +41,15 @@ def train(cfg):
     #     transforms.Compose([transforms.RandomRotation(degrees=180,expand=True),transforms.Resize((224,224))])
     #     ]
 
+    random_transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Resize((224, 224),antialias=None),
+                transforms.RandomHorizontalFlip(p=.5),
+                transforms.RandomVerticalFlip(p=.5),
+                AddGaussianNoise(mean=0.0, std=0.2),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+
     simple_transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Resize((224, 224),antialias=None),
@@ -48,26 +57,37 @@ def train(cfg):
             ])
 
 
-    traindir = os.path.join(cfg.data_dir, 'train_val')
+    traindir = os.path.join(cfg.data_dir, 'train')
     valdir = os.path.join(cfg.data_dir, 'val_train')
 
     train_dataset = ImageFolder(traindir, transform=simple_transform)
+    # train_dataset = ImageFolder(traindir, transform=random_transform)
+
     val_dataset = ImageFolder(valdir, transform=simple_transform)
     class_to_idx = train_dataset.class_to_idx
 
     class_list = list(range(48))
     for  (class_name, index) in class_to_idx.items():
         class_list[index] = class_name
+
+    wandbname = 'RESUME_clip16_simple_finetune_mlpunfrozen'
     
-    
+    logger = wandb.init(project="challenge", name=wandbname)
     
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
 
     # model, preprocess = clip.load("ViT-B/32", device=device)
-    # model, preprocess = clip.load("ViT-B/16", device=device)
-    model, preprocess = clip.load("ViT-L/14", device=device)
+    model, preprocess = clip.load("ViT-B/16", device=device)
+    # model, preprocess = clip.load("ViT-L/14", device=device)
     # model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
     # processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+    resume = True
+    if resume :
+        checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+        path = os.path.join(checkpoints_path, 'clip16_frozen_finetune_30epochs.pt')
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint)
 
     model.float()
 
@@ -97,10 +117,10 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        sampled_ops = np.random.choice(augments, aug_num)
-        sampled_aug = transforms.Compose(sampled_ops)
-        train_augment = transforms.Compose([simple_transform,sampled_aug])
-        train_dataset.transform = train_augment
+        # sampled_ops = np.random.choice(augments, aug_num)
+        # sampled_aug = transforms.Compose(sampled_ops)
+        # train_augment = transforms.Compose([simple_transform,sampled_aug])
+        # train_dataset.transform = train_augment
         train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
         for _, batch in enumerate(train_loader):
@@ -132,8 +152,9 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        torch.save(model.state_dict(), os.path.join(checkpoints_path, f'frozenclip14_checkpoint_epoch_{epoch}.pt'))
+        if epoch%2 == 0:
+            checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+            torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_checkpoint_epoch_{epoch}.pt'))
 
         for _, batch in enumerate(val_loader):
             images, labels = batch

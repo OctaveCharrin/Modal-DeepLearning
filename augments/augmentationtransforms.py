@@ -7,7 +7,7 @@ class AugmentationTransforms:
     ):
         
         self.simple = transforms.Compose([
-                                         transforms.Resize((240,240),antialias=None),
+                                         transforms.Resize((224,224),antialias=None),
                                          transforms.ToTensor(),
                                          transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                                          ])
@@ -29,7 +29,7 @@ class AugmentationTransforms:
                                                   ])
         self.random_erasing = transforms.Compose([
                                                  transforms.ToPILImage(),
-                                                 transforms.Resize((240,240),antialias=None),
+                                                 transforms.Resize((224,224),antialias=None),
                                                  transforms.ToTensor(),
                                                  transforms.RandomErasing(p=.75, scale=(0.01, 0.05), ratio=(0.5, 1.5)),
                                                  transforms.RandomErasing(p=.75, scale=(0.01, 0.05), ratio=(0.5, 1.5)),
@@ -40,14 +40,14 @@ class AugmentationTransforms:
                                                  ])
         self.horizontal_flip = transforms.Compose([
                                                   transforms.ToPILImage(),
-                                                  transforms.Resize((240,240),antialias=None),
+                                                  transforms.Resize((224,224),antialias=None),
                                                   transforms.RandomHorizontalFlip(p=1.),
                                                   transforms.ToTensor(),
                                                   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                                                   ])
         self.vertical_flip = transforms.Compose([
                                                 transforms.ToPILImage(),
-                                                transforms.Resize((240,240),antialias=None),
+                                                transforms.Resize((224,224),antialias=None),
                                                 transforms.RandomVerticalFlip(p=1.),
                                                 transforms.ToTensor(),
                                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
