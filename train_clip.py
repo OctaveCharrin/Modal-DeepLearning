@@ -20,8 +20,13 @@ def train(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
+    wandbname = 'RESUME_clip16_wd10_simple_allmlpunfrozen'
     learning_rate = 1e-7
+    wd = 10
     aug_num = 3
+    final = False
+    resume = False
+    numcheck = 5
 
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,7 +62,10 @@ def train(cfg):
             ])
 
 
-    traindir = os.path.join(cfg.data_dir, 'train')
+    
+
+    train_path = 'train' if final else 'train_val'
+    traindir = os.path.join(cfg.data_dir, train_path)
     valdir = os.path.join(cfg.data_dir, 'val_train')
 
     train_dataset = ImageFolder(traindir, transform=simple_transform)
@@ -70,7 +78,6 @@ def train(cfg):
     for  (class_name, index) in class_to_idx.items():
         class_list[index] = class_name
 
-    wandbname = 'RESUME_clip16_simple_finetune_mlpunfrozen'
     
     logger = wandb.init(project="challenge", name=wandbname)
     
@@ -79,38 +86,28 @@ def train(cfg):
     # model, preprocess = clip.load("ViT-B/32", device=device)
     model, preprocess = clip.load("ViT-B/16", device=device)
     # model, preprocess = clip.load("ViT-L/14", device=device)
-    # model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-    # processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-    resume = True
     if resume :
         checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        path = os.path.join(checkpoints_path, 'clip16_frozen_finetune_30epochs.pt')
+        path = os.path.join(checkpoints_path, 'run_clip16_wd1_simple_allmlpunfrozen_checkpoint_final.pt')
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint)
 
     model.float()
 
-    # for name, param in model.named_parameters():
-    #     print(name)
-    #     if name.startswith('transfomer'):
-    #         param.requires_grad = False
-
     for name, param in model.named_parameters():
-        if ('mlp' in name) and (name.startswith('visual')):
+        # if ('mlp' in name) and (name.startswith('visual')):
+        if ('mlp' in name):
             continue
         else:
             param.requires_grad = False
 
-    # interval = range(250, 1000)
-    # for i, params in enumerate(model.parameters()):
-    #     if i in interval:
-    #         params.requires_grad = False
-
     text = clip.tokenize(class_list).to(device)
 
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=wd)
     # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
+
+    train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
     for epoch in tqdm(range(cfg.epochs)):
         epoch_loss = 0
@@ -121,7 +118,7 @@ def train(cfg):
         # sampled_aug = transforms.Compose(sampled_ops)
         # train_augment = transforms.Compose([simple_transform,sampled_aug])
         # train_dataset.transform = train_augment
-        train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+        # train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
         for _, batch in enumerate(train_loader):
             images, labels = batch
@@ -144,6 +141,7 @@ def train(cfg):
         epoch_acc = epoch_num_correct / num_samples
         logger.log(
             {
+                "epoch": epoch,
                 "train_loss_epoch": epoch_loss,
                 "train_acc": epoch_acc,
             }
@@ -152,7 +150,7 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        if epoch%2 == 0:
+        if epoch%numcheck == 0 and not final:
             checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
             torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_checkpoint_epoch_{epoch}.pt'))
 
@@ -177,7 +175,8 @@ def train(cfg):
                 "val_acc": epoch_acc,
             }
         )
-    torch.save(model.state_dict(), cfg.checkpoint_path)
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_checkpoint_final.pt'))
     wandb.finish()
 
 
