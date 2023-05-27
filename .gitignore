@@ -14,3 +14,4 @@ mean_teacher_train/train
 test.py
 testing.py
 /clip_test
+file.txt
