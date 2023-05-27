@@ -9,6 +9,7 @@ from torchvision.transforms import transforms
 import clip
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import json
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def main(cfg):
@@ -75,7 +76,7 @@ def main(cfg):
 
     # Print the confusion matrix
     save_confmat(confusion_mat, class_list, pathjpg)
-    np.savetxt(pathtxt, confusion_mat)
+    save_txt_file(pathtxt, confusion_mat, class_list, pathjpg)
 
 
 def save_confmat(matrix, class_dict, fname):
@@ -101,6 +102,11 @@ def save_confmat(matrix, class_dict, fname):
     plt.tight_layout()  # Adjust subplot parameters to fit the figure area
 
     plt.savefig(fname)
+
+def save_txt_file(path, matrix, class_names,fname):
+    my_dict = {'matrix':matrix, 'class_dict':class_names, 'fname':fname}
+    with open(path, 'w') as file:
+        json.dump(my_dict, file)
 
 
 if __name__ == '__main__':
