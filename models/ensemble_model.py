@@ -19,6 +19,15 @@ class EnsembleModel(nn.Module):
 
         # Learnable fusion layer
         self.fusion_layer = nn.Linear(in_features=num_classes * 2, out_features=num_classes)
+        
+        # Initialize the fusion layer weights and biases for sum operation
+        with torch.no_grad():
+            eye_matrix1 = torch.eye(num_classes)
+            eye_matrix2 = torch.eye(num_classes)
+            stacked_matrix = torch.cat((eye_matrix1, eye_matrix2), dim=1)
+
+            self.fusion_layer.weight.copy_(stacked_matrix)
+            self.fusion_layer.bias.copy_(torch.zeros(num_classes))
 
     def forward(self, x):
         # Forward pass through the backbone models

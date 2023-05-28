@@ -18,8 +18,8 @@ def train(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
-    wandbname = 'run_ensemble_lr1e3_wd0'
-    learning_rate = 1e-3
+    wandbname = 'FINAL_ensemble_lr1e7_wd0'
+    learning_rate = 1e-7
     wd = 0
     betas = (0.9, 0.999)
 
@@ -93,7 +93,7 @@ def train(cfg):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
 
-    train_path = 'train_val'
+    train_path = 'train'
     traindir = os.path.join(cfg.data_dir, train_path)
     valdir = os.path.join(cfg.data_dir, 'val_train')
 
