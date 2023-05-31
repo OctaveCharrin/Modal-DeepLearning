@@ -21,33 +21,72 @@ def train(cfg):
     # os.environ['WANDB_MODE'] = 'offline'
 
     
-    learning_rate = 1e-7
-    wd = 1000
+    learning_rate = 5e-8
+    wd = 0.01
     aug_num = 3
     final = True
     resume = False
     numcheck = 5
-    wandbname = 'FINAL_clip16_wd1e3_simple_mlpunfroz'
+    wandbname = 'WISEFT_clip16_lr5e-8_wd.01_simple_allunfroz_namechg'
 
     name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
-                        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
-                        'bearberry' : 'a red bearberry fruit',
-                        'brick red' : 'a red brick house or landscape',
-                        'carbine' : 'a carbine pistol weapon',
-                        'ceriman' : 'a green ceriman fruit or landscape',
-                        'couscous' : 'an oriental couscous',
-                        'flash' : 'rainbow flash room',
-                        'florist' : 'florist flowers',
-                        'kingfish' : 'a kingfish fish',
-                        'organ loft' : 'church organ loft',
-                        'peahen' : 'a peahen bird',
-                        'plunge' : 'pool water plunge',
-                        'silkworm' : 'a worm',
-                        'veloute' : 'a veloute soup in a cup',
-                        'vintage' : 'a vintage building or castle',
-                        'zinfandel' : 'red wine glass or bottle'}
+                    'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+                    'bearberry' : 'a red bearberry fruit',
+                    'brick red' : 'a red brick house or landscape',
+                    'carbine' : 'a carbine pistol weapon',
+                    'ceriman' : 'a green ceriman fruit or landscape',
+                    'couscous' : 'an oriental couscous',
+                    'flash' : 'rainbow flash room',
+                    'florist' : 'florist flowers',
+                    'kingfish' : 'a kingfish fish',
+                    'organ loft' : 'church organ loft',
+                    'peahen' : 'a peahen bird',
+                    'plunge' : 'pool water plunge',
+                    'silkworm' : 'a worm',
+                    'veloute' : 'a veloute soup in a cup',
+                    'vintage' : 'a vintage building or castle',
+                    'zinfandel' : 'red wine glass or bottle'}
+
+    name_changerV2 = {
+        'bat': 'a bat',
+        'bearberry' : 'a red bearberry fruit',
+        'black tailed deer' : 'a deer',
+        'brick red' : 'a red brick house or landscape',
+        'carbine' : 'a carbine rifle pistol weapon',
+        'ceriman' : 'a green ceriman fruit or landscape',
+        'couscous' : 'an oriental granular couscous',
+        'entoloma lividum' : 'an entoloma lividium brown mushroom',
+        'ethyl alcohol' : 'alcohol effects',
+        'flash' : 'rainbow flash room',
+        'florist' : 'florist flowers',
+        'gosling' : 'a gosling or Ryan Gosling',
+        'grenadine' : 'a grenade red fruity mood picture',
+        'kingfish' : 'a kingfish fish',
+        'organ loft' : 'a church organ loft with stainglass',
+        'peahen' : 'a peahen bird',
+        'platter' : 'a platter plate',
+        'plunge' : 'pool water plunge',
+        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+        'silkworm' : 'a worm',
+        'veloute' : 'a veloute soup in a cup',
+        'vintage' : 'a vintage building or castle',
+        'zinfandel' : 'red wine glass bottle or grape field'}
     
-    name_changer = {}
+    name_changerV3 = {
+        'bat': 'a bat',
+        'black tailed deer' : 'a deer',
+        'carbine' : 'a carbine rifle pistol weapon',
+        'couscous' : 'an oriental granular couscous',
+        'ethyl alcohol' : 'alcohol effects',
+        'florist' : 'florist flowers',
+        'gosling' : 'a gosling or Ryan Gosling',
+        'grenadine' : 'a grenade red fruity mood picture',
+        'organ loft' : 'a church organ loft with stainglass',
+        'platter' : 'a platter plate',
+        'zinfandel' : 'red wine glass bottle or grape field'}
+    
+    name_changer = name_changerV2
+    # name_changer = {}
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -92,7 +131,7 @@ def train(cfg):
     # train_dataset = ImageFolder(traindir, transform=random_transform)
 
     val_dataset = ImageFolder(valdir, transform=simple_transform)
-    class_to_idx = train_dataset.class_to_idx
+    class_to_idx = datamodule.dataset.class_to_idx
 
     class_list = list(range(48))
     for  (class_name, index) in class_to_idx.items():
@@ -103,16 +142,14 @@ def train(cfg):
             class_list[index] = class_name
 
     
-    logger = wandb.init(project="challenge", name=wandbname)
+    logger = wandb.init(project="report tests", name=wandbname)
     
-    val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
-
     # model, preprocess = clip.load("ViT-B/32", device=device)
     model, preprocess = clip.load("ViT-B/16", device=device)
 
     if resume :
         checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        path = os.path.join(checkpoints_path, 'heckpoint_final.pt')
+        path = os.path.join(checkpoints_path, 'path.pt')
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint)
 
@@ -120,7 +157,8 @@ def train(cfg):
 
     for name, param in model.named_parameters():
         # if ('mlp' in name) and (name.startswith('visual')):
-        if ('mlp' in name):
+        # if ('mlp' in name):
+        if True:
             continue
         else:
             param.requires_grad = False
@@ -130,7 +168,11 @@ def train(cfg):
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=wd)
     # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
 
-    train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+    # train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+    # val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
+
+    train_loader = datamodule.train_dataloader()
+    val_loader = datamodule.val_dataloader()
 
     for epoch in tqdm(range(cfg.epochs)):
         epoch_loss = 0
@@ -202,7 +244,6 @@ def train(cfg):
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_final.pt'))
     wandb.finish()
-
 
 if __name__ == "__main__":
     train()

@@ -30,13 +30,15 @@ def main(cfg):
 
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
+    val_loader = datamodule.val_dataloader()
+
     # model, preprocess = clip.load("ViT-B/32", device=device)
     model1, preprocess = clip.load("ViT-B/16", device=device)
     model2, preprocess = clip.load("ViT-B/16", device=device)
 
     model1, model2 = model1.float(), model2.float()
 
-    fname = 'FINAL_ensemble_lr1e7_wd0_chckpt_final'
+    fname = 'FINAL_clip16_lr5e-8_wd.01_simple_allunfroz_namechgV2_chckpt_final'
 
     class_to_idx = val_dataset.class_to_idx
 
@@ -74,7 +76,10 @@ def main(cfg):
     text1 = clip.tokenize(class_list1).to(device)
     text2 = clip.tokenize(class_list2).to(device)
 
-    model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
+    # model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
+    model, preprocess = clip.load("ViT-B/16", device=device)
+
+
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')
@@ -93,8 +98,8 @@ def main(cfg):
             images, labels = batch
             images = images.to(device)
             labels = labels.to(device)
-            # predictions, _ = model(images, text1)
-            predictions = model(images)
+            predictions, _ = model(images, text1)
+            # predictions = model(images)
             _, predicted_labels = torch.max(predictions, 1)
             # Append predictions and labels to the lists
             all_predictions.extend(predicted_labels.cpu().numpy())
