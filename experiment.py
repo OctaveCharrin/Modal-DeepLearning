@@ -1,18 +1,63 @@
 import torch
 # import wandb
-# import hydra
+import hydra
 # import os
 # from tqdm import tqdm
 # from PIL import Image
 # from torch.utils.data import Dataset, DataLoader, TensorDataset, ConcatDataset
 # from torchvision.datasets import DatasetFolder
 # from augments.augmentationtransforms import AugmentationTransforms
+from data.datamodule import DataModule
 
 
-# @hydra.main(config_path="configs", config_name="config", version_base=None)
-def main():
+@hydra.main(config_path="configs", config_name="config", version_base=None)
+def main(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(device)
+    datamodule = hydra.utils.instantiate(cfg.datamodule)
+
+    class_to_idx = datamodule.dataset.class_to_idx
+
+    name_changerV2 = {
+        'bat': 'a bat',
+        'bearberry' : 'a red bearberry fruit',
+        'black tailed deer' : 'a deer',
+        'brick red' : 'a red brick house or landscape',
+        'carbine' : 'a carbine rifle pistol weapon',
+        'ceriman' : 'a green ceriman fruit or landscape',
+        'couscous' : 'an oriental granular couscous',
+        'entoloma lividum' : 'an entoloma lividium mushroom',
+        'ethyl alcohol' : 'alcohol effects',
+        'flash' : 'rainbow flash room',
+        'florist' : 'florist flowers',
+        'gosling' : 'a gosling or Ryan Gosling',
+        'grenadine' : 'a grenade red fruity mood picture',
+        'kingfish' : 'a kingfish fish',
+        'organ loft' : 'a church organ loft with stainglass',
+        'peahen' : 'a peahen bird',
+        'platter' : 'a platter plate',
+        'plunge' : 'pool water plunge',
+        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+        'silkworm' : 'a worm',
+        'veloute' : 'a veloute soup in a cup',
+        'vintage' : 'a vintage building or castle',
+        'zinfandel' : 'red wine glass bottle or grape field'}
+
+    
+    class_list = list(range(48))
+    for  (class_name, index) in class_to_idx.items():
+        class_name = class_name.lower()
+        if class_name in name_changerV2.keys():
+            class_list[index] = name_changerV2[class_name]
+        else :
+            class_list[index] = class_name
+
+
+    m=  ['cavern', 'red', 'lavender', 'building', 'dragon', 'owl', 'cherry', 
+    'mountain', 'colorful', 'screens', 'sand', 'purple', 'subway', 'pilar', 
+    'psychadelic', 'castle', 'grass', 'baloon', 'pipe', 'space', 'forest']
+    print(len(list(set(class_list+m))))
+
+
 
     # unlabelled_transform = hydra.utils.instantiate(cfg.datamodule.train_transform)
     # unlabelled_dataset = UnlabelledDataset(cfg.datasetmodule.unlabeled_dataset_path, transform=unlabelled_transform)

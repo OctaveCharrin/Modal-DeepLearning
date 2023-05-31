@@ -38,7 +38,7 @@ args = None
 best_prec1 = 0
 global_step = 0
 
-batch_size = 20
+batch_size = 10
 labeled_batch_size = int(0.25*batch_size)
 workers = 0
 
@@ -47,8 +47,7 @@ def main(context):
     global global_step
     global best_prec1
 
-    # os.environ['WANDB_MODE'] = 'offline'
-    logger = wandb.init(project="mean_teacher", name='test')
+    # logger = wandb.init(project="challenge", name='test')
 
     checkpoint_path = context.transient_dir
     training_log = context.create_train_log("training")
@@ -103,30 +102,30 @@ def main(context):
 
     if args.evaluate:
         LOG.info("Evaluating the primary model:")
-        validate(eval_loader, model, validation_log, global_step, args.start_epoch, logger, ema=False)
+        validate(eval_loader, model, validation_log, global_step, args.start_epoch)
         LOG.info("Evaluating the EMA model:")
-        validate(eval_loader, ema_model, ema_validation_log, global_step, args.start_epoch, logger, ema=True)
+        validate(eval_loader, ema_model, ema_validation_log, global_step, args.start_epoch)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
         start_time = time.time()
         # train for one epoch
-        train(train_loader, model, ema_model, optimizer, epoch, training_log, logger)
+        train(train_loader, model, ema_model, optimizer, epoch, training_log)
         LOG.info("--- training epoch in %s seconds ---" % (time.time() - start_time))
 
         if args.evaluation_epochs and (epoch + 1) % args.evaluation_epochs == 0:
             start_time = time.time()
             LOG.info("Evaluating the primary model:")
-            prec1 = validate(eval_loader, model, validation_log, global_step, epoch + 1, logger, ema=False)
+            prec1 = validate(eval_loader, model, validation_log, global_step, epoch + 1)
             LOG.info("Evaluating the EMA model:")
-            ema_prec1 = validate(eval_loader, ema_model, ema_validation_log, global_step, epoch + 1, logger, ema=True)
+            ema_prec1 = validate(eval_loader, ema_model, ema_validation_log, global_step, epoch + 1)
             LOG.info("--- validation in %s seconds ---" % (time.time() - start_time))
             is_best = ema_prec1 > best_prec1
             best_prec1 = max(ema_prec1, best_prec1)
         else:
             is_best = False
 
-        if args.checkpoint_epochs and (epoch + 1) % args.checkpoint_epochs == 0 and is_best:
+        if args.checkpoint_epochs and (epoch + 1) % args.checkpoint_epochs == 0:
             save_checkpoint({
                 'epoch': epoch + 1,
                 'global_step': global_step,
@@ -277,7 +276,7 @@ def update_ema_variables(model, ema_model, alpha, global_step):
         ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
 
 
-def train(train_loader, model, ema_model, optimizer, epoch, log, logger):
+def train(train_loader, model, ema_model, optimizer, epoch, log):
     global global_step
 
     # class_criterion = nn.CrossEntropyLoss(size_average=False, ignore_index=NO_LABEL).cuda()
@@ -314,8 +313,8 @@ def train(train_loader, model, ema_model, optimizer, epoch, log, logger):
         assert labeled_minibatch_size > 0
         meters.update('labeled_minibatch_size', labeled_minibatch_size)
 
-        ema_model_out = ema_model(ema_input_var)
-        model_out = model(input_var)
+        ema_model_out, _ = ema_model(ema_input_var)
+        model_out, _ = model(input_var)
 
         if isinstance(model_out, Variable):
             assert args.logit_distance_cost < 0
@@ -379,13 +378,6 @@ def train(train_loader, model, ema_model, optimizer, epoch, log, logger):
         meters.update('batch_time', time.time() - end)
         end = time.time()
 
-        logger.log({
-            'epoch': epoch, 
-            'loss': loss.data.item(),
-            'acc': prec1[0],
-            'ema_acc':ema_prec1[0],
-        })
-
         if i % args.print_freq == 0:
             LOG.info(
                 'Epoch: [{0}][{1}/{2}]\t'
@@ -433,7 +425,7 @@ def train(train_loader, model, ema_model, optimizer, epoch, log, logger):
 #     plt.show()
 
 
-def validate(eval_loader, model, log, global_step, epoch, logger, ema):
+def validate(eval_loader, model, log, global_step, epoch):
     # class_criterion = nn.CrossEntropyLoss(size_average=False, ignore_index=NO_LABEL).cuda()
     class_criterion = nn.CrossEntropyLoss(reduction='sum', ignore_index=NO_LABEL).cuda()
     meters = AverageMeterSet()
@@ -475,22 +467,6 @@ def validate(eval_loader, model, log, global_step, epoch, logger, ema):
             # measure elapsed time
             meters.update('batch_time', time.time() - end)
             end = time.time()
-            if ema:
-                logger.log(
-                    {
-                        'epoch': epoch, 
-                        'loss': class_loss.item(),
-                        'ema_val_acc': prec1[0],
-                    }
-                )
-            else:
-                logger.log(
-                    {
-                        'epoch': epoch, 
-                        'loss': class_loss.item(),
-                        'val_acc': prec1[0],
-                    }
-                )
 
             if i % args.print_freq == 0:
                 LOG.info(

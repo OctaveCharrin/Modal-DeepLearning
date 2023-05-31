@@ -10,9 +10,12 @@ import math
 import itertools
 import clip
 import torch
+import clip
+import os
 from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Variable, Function
+from torchvision.datasets import ImageFolder
 
 from .utils import export, parameter_count
 
@@ -26,11 +29,71 @@ class DinoModel(nn.Module):
         x = self.backbone(x)
         x = self.classifier(x)
         return x
+    
+class CLIP16Model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model, preprocess = clip.load("ViT-B/16", device=device)
+        self.backbone = model
+
+        datadir = '../datasetV2/'
+        train_dataset = ImageFolder(os.path.join(datadir, "train_val"))
+
+        class_to_idx = train_dataset.class_to_idx
+
+        class_list = list(range(48))
+        for  (class_name, index) in class_to_idx.items():
+            class_name = class_name.lower()
+            class_list[index] = class_name
+
+        self.text = clip.tokenize(class_list).to(device)
+    
+    def forward(self, x):
+        return self.backbone(x, self.text)
+    
+
+class CLIP32Model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model, preprocess = clip.load("ViT-B/32", device=device)
+
+        self.backbone = model
+
+        datadir = '../datasetV2/'
+        train_dataset = ImageFolder(os.path.join(datadir, "train_val"))
+
+        class_to_idx = train_dataset.class_to_idx
+
+        class_list = list(range(48))
+        for  (class_name, index) in class_to_idx.items():
+            class_name = class_name.lower()
+            class_list[index] = class_name
+
+        self.text = clip.tokenize(class_list).to(device)
+    
+    def forward(self, x):
+        return self.backbone(x, self.text)
+
+
+@export
+def clip16(pretrained=True, **kwargs):
+    model = CLIP16Model()
+    return model
+
+
+@export
+def clip32(pretrained=True, **kwargs):
+    model = CLIP32Model()
+    return model
+
 
 @export
 def dino(pretrained=True, **kwargs):
     model = DinoModel()
     return model
+
 
 @export
 def cifar_shakeshake26(pretrained=False, **kwargs):
