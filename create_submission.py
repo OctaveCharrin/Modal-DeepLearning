@@ -7,6 +7,8 @@ import torch
 from tqdm import tqdm
 import clip
 from models.ensemble_model import EnsembleModel
+from models.megaclip import WORD_LIST, MegaClip, SMALL_LIST
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -56,50 +58,56 @@ def create_submission(cfg):
     # text = clip.tokenize(class_names).to(device)
 
     # model.eval()
-    model1, preprocess = clip.load("ViT-B/16", device=device)
-    model2, preprocess = clip.load("ViT-B/16", device=device)
 
-    model1, model2 = model1.float(), model2.float()
+    # For ensemble learning ###############
 
-    fname = 'FINAL_ensemble_lr1e7_wd0_chckpt_final'
+    # model1, preprocess = clip.load("ViT-B/16", device=device)
+    # model2, preprocess = clip.load("ViT-B/16", device=device)
 
-    class_to_idx = datamodule.dataset.class_to_idx
+    # model1, model2 = model1.float(), model2.float()
 
-    name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
-                        'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
-                        'bearberry' : 'a red bearberry fruit',
-                        'brick red' : 'a red brick house or landscape',
-                        'carbine' : 'a carbine pistol weapon',
-                        'ceriman' : 'a green ceriman fruit or landscape',
-                        'couscous' : 'an oriental couscous',
-                        'flash' : 'rainbow flash room',
-                        'florist' : 'florist flowers',
-                        'kingfish' : 'a kingfish fish',
-                        'organ loft' : 'church organ loft',
-                        'peahen' : 'a peahen bird',
-                        'plunge' : 'pool water plunge',
-                        'silkworm' : 'a worm',
-                        'veloute' : 'a veloute soup in a cup',
-                        'vintage' : 'a vintage building or castle',
-                        'zinfandel' : 'red wine glass or bottle'}
+    fname = 'MEGACLIP_le5e-8_wd.01_chckpt_final'
+
+    # class_to_idx = datamodule.dataset.class_to_idx
+
+    # name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
+    #                     'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+    #                     'bearberry' : 'a red bearberry fruit',
+    #                     'brick red' : 'a red brick house or landscape',
+    #                     'carbine' : 'a carbine pistol weapon',
+    #                     'ceriman' : 'a green ceriman fruit or landscape',
+    #                     'couscous' : 'an oriental couscous',
+    #                     'flash' : 'rainbow flash room',
+    #                     'florist' : 'florist flowers',
+    #                     'kingfish' : 'a kingfish fish',
+    #                     'organ loft' : 'church organ loft',
+    #                     'peahen' : 'a peahen bird',
+    #                     'plunge' : 'pool water plunge',
+    #                     'silkworm' : 'a worm',
+    #                     'veloute' : 'a veloute soup in a cup',
+    #                     'vintage' : 'a vintage building or castle',
+    #                     'zinfandel' : 'red wine glass or bottle'}
                         
-    # name_changer = {}
+    # # name_changer = {}
 
-    class_list1 = list(range(48))
-    class_list2 = list(range(48))
-    for  (class_name, index) in class_to_idx.items():
-        class_name = class_name.lower()
-        class_list2[index] = class_name
-        if class_name in name_changer.keys():
-            class_list1[index] = name_changer[class_name]
-        else:
-            class_list1[index] = class_name
+    # class_list1 = list(range(48))
+    # class_list2 = list(range(48))
+    # for  (class_name, index) in class_to_idx.items():
+    #     class_name = class_name.lower()
+    #     class_list2[index] = class_name
+    #     if class_name in name_changer.keys():
+    #         class_list1[index] = name_changer[class_name]
+    #     else:
+    #         class_list1[index] = class_name
 
     
-    text1 = clip.tokenize(class_list1).to(device)
-    text2 = clip.tokenize(class_list2).to(device)
+    # text1 = clip.tokenize(class_list1).to(device)
+    # text2 = clip.tokenize(class_list2).to(device)
 
-    model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
+    # model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
+
+    word_list = SMALL_LIST
+    model = MegaClip(word_list, 48).to(device)
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')

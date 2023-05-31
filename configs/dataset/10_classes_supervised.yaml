@@ -10,7 +10,7 @@ defaults:
   # - random_rotation: random_rotation
 
 num_classes: 48
-batch_size: 256
+batch_size:  15
 num_workers: 3
 train_path: ${data_dir}/train
 test_path: ${data_dir}/test
