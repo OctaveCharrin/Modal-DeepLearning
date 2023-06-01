@@ -38,9 +38,9 @@ args = None
 best_prec1 = 0
 global_step = 0
 
-batch_size = 20
+batch_size = 32
 labeled_batch_size = int(0.25*batch_size)
-workers = 0
+workers = 3
 
 
 def main(context):
@@ -126,7 +126,7 @@ def main(context):
         else:
             is_best = False
 
-        if args.checkpoint_epochs and (epoch + 1) % args.checkpoint_epochs == 0 and is_best:
+        if args.checkpoint_epochs and (epoch + 1) % 50 == 0:
             save_checkpoint({
                 'epoch': epoch + 1,
                 'global_step': global_step,

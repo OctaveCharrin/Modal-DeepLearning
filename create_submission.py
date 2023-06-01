@@ -7,7 +7,7 @@ import torch
 from tqdm import tqdm
 import clip
 from models.ensemble_model import EnsembleModel
-from models.megaclip import WORD_LIST, MegaClip, SMALL_LIST
+from models.ensemble_model_list import EnsembleModelList
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,7 +66,7 @@ def create_submission(cfg):
 
     # model1, model2 = model1.float(), model2.float()
 
-    fname = 'MEGACLIP_le5e-8_wd.01_chckpt_final'
+    fname = 'Ensemble_4models_chckpt_final'
 
     # class_to_idx = datamodule.dataset.class_to_idx
 
@@ -106,8 +106,7 @@ def create_submission(cfg):
 
     # model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
 
-    word_list = SMALL_LIST
-    model = MegaClip(word_list, 48).to(device)
+    model = EnsembleModelList.create_model(cfg, device, datamodule)
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')

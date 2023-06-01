@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import json
 from models.ensemble_model import EnsembleModel
+from models.ensemble_model_list import EnsembleModelList
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def main(cfg):
@@ -30,15 +31,7 @@ def main(cfg):
 
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
 
-    val_loader = datamodule.val_dataloader()
-
-    # model, preprocess = clip.load("ViT-B/32", device=device)
-    model1, preprocess = clip.load("ViT-B/16", device=device)
-    model2, preprocess = clip.load("ViT-B/16", device=device)
-
-    model1, model2 = model1.float(), model2.float()
-
-    fname = 'FINAL_clip16_lr5e-8_wd.01_simple_allunfroz_namechgV2_chckpt_final'
+    fname = 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz_namechgV2_chckpt_15'
 
     class_to_idx = val_dataset.class_to_idx
 
@@ -59,8 +52,47 @@ def main(cfg):
                         'veloute' : 'a veloute soup in a cup',
                         'vintage' : 'a vintage building or castle',
                         'zinfandel' : 'red wine glass or bottle'}
+    name_changerV2 = {
+                'bat': 'a bat',
+                'bearberry' : 'a red bearberry fruit',
+                'black tailed deer' : 'a deer',
+                'brick red' : 'a red brick house or landscape',
+                'carbine' : 'a carbine rifle pistol weapon',
+                'ceriman' : 'a green ceriman fruit or landscape',
+                'couscous' : 'an oriental granular couscous',
+                'entoloma lividum' : 'an entoloma lividium brown mushroom',
+                'ethyl alcohol' : 'alcohol effects',
+                'flash' : 'rainbow flash room',
+                'florist' : 'florist flowers',
+                'gosling' : 'a gosling or Ryan Gosling',
+                'grenadine' : 'a grenade red fruity mood picture',
+                'kingfish' : 'a kingfish fish',
+                'organ loft' : 'a church organ loft with stainglass',
+                'peahen' : 'a peahen bird',
+                'platter' : 'a platter plate',
+                'plunge' : 'pool water plunge',
+                'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
+                'silkworm' : 'a worm',
+                'veloute' : 'a veloute soup in a cup',
+                'vintage' : 'a vintage building or castle',
+                'zinfandel' : 'red wine glass bottle or grape field'}
+
+    name_changerV3 = {
+        'bat': 'a bat',
+        'black tailed deer' : 'a deer',
+        'carbine' : 'a carbine rifle pistol weapon',
+        'couscous' : 'an oriental granular couscous',
+        'ethyl alcohol' : 'alcohol effects',
+        'florist' : 'florist flowers',
+        'gosling' : 'a gosling or Ryan Gosling',
+        'grenadine' : 'a grenade red fruity mood picture',
+        'organ loft' : 'a church organ loft with stainglass',
+        'platter' : 'a platter plate',
+        'zinfandel' : 'red wine glass bottle or grape field'}
                         
     # name_changer = {}
+    name_changer = name_changerV2
+    # name_changer = name_changerV3
 
     class_list1 = list(range(48))
     class_list2 = list(range(48))
@@ -79,7 +111,7 @@ def main(cfg):
     # model = EnsembleModel(model1, model2, text1, text2, cfg.dataset.num_classes).to(device)
     model, preprocess = clip.load("ViT-B/16", device=device)
 
-
+    # model = EnsembleModelList.create_model(cfg, device, datamodule)
 
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     path = os.path.join(checkpoints_path, f'{fname}.pt')

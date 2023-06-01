@@ -4,15 +4,14 @@ import hydra
 import os
 import clip
 import torch.optim as optim
-import numpy as np
-# from timm.data.auto_augment import rand_augment_transform
+import random
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms
 from augments.augmentationtransforms import AugmentationTransforms
-from augments.addgaussiannoise import AddGaussianNoise
-
+from models.ensemble_model import EnsembleModel
+from models.ensemble_model_list import EnsembleModelList
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg):
@@ -20,14 +19,18 @@ def train(cfg):
     # os.environ['WANDB_API_KEY'] = '045006204280bf2b17bd53dfd35a0ba8e54d00b6'
     # os.environ['WANDB_MODE'] = 'offline'
 
-    
+    wandbname = 'Ensemble_4models'
     learning_rate = 5e-8
     wd = 0.01
-    aug_num = 3
-    final = False
-    resume = False
-    numcheck = 5
-    wandbname = 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz'
+    betas = (0.9, 0.999)
+    activate_checkpoint = False
+
+    logger = wandb.init(project="report tests", name=wandbname)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    loss_fn = hydra.utils.instantiate(cfg.loss_fn)
+    datamodule = hydra.utils.instantiate(cfg.datamodule)
 
     name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
                     'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
@@ -46,7 +49,6 @@ def train(cfg):
                     'veloute' : 'a veloute soup in a cup',
                     'vintage' : 'a vintage building or castle',
                     'zinfandel' : 'red wine glass or bottle'}
-
     name_changerV2 = {
         'bat': 'a bat',
         'bearberry' : 'a red bearberry fruit',
@@ -71,7 +73,7 @@ def train(cfg):
         'veloute' : 'a veloute soup in a cup',
         'vintage' : 'a vintage building or castle',
         'zinfandel' : 'red wine glass bottle or grape field'}
-    
+
     name_changerV3 = {
         'bat': 'a bat',
         'black tailed deer' : 'a deer',
@@ -85,35 +87,80 @@ def train(cfg):
         'platter' : 'a platter plate',
         'zinfandel' : 'red wine glass bottle or grape field'}
     
-    # name_changer = name_changerV2
-    # name_changer = name_changerV3
-    name_changer = {}
+    class_to_idx = datamodule.dataset.class_to_idx
+
+    class_list0 = list(range(48))
+    class_list1 = list(range(48))
+    class_list2 = list(range(48))
+    class_list3 = list(range(48))
+
+# For ensemble learning
+
+    for  (class_name, index) in class_to_idx.items():
+        class_name = class_name.lower()
+        class_list0[index] = class_name
+        if class_name in name_changer.keys():
+            class_list1[index] = name_changer[class_name]
+        else:
+            class_list1[index] = class_name
+        if class_name in name_changerV2.keys():
+            class_list2[index] = name_changerV2[class_name]
+        else:
+            class_list2[index] = class_name
+        if class_name in name_changerV3.keys():
+            class_list3[index] = name_changerV3[class_name]
+        else:
+            class_list3[index] = class_name
+
+    text0= clip.tokenize(class_list0).to(device)
+    text1= clip.tokenize(class_list1).to(device)
+    text2= clip.tokenize(class_list2).to(device)
+    text3= clip.tokenize(class_list3).to(device)
+
+    # Creation and loading the model 0
+    model0, preprocess0 = clip.load("ViT-B/16", device=device)
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    path = os.path.join(checkpoints_path, 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz_chckpt_final.pt')
+    checkpoint = torch.load(path)
+    model0.load_state_dict(checkpoint)
+    model0.float()
+
+    # Creation and loading the model 1
+    model1, preprocess1 = clip.load("ViT-B/16", device=device)
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    path = os.path.join(checkpoints_path, 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz_namechg_chckpt_final.pt')
+    checkpoint = torch.load(path)
+    model1.load_state_dict(checkpoint)
+    model1.float()
+
+    # Creation and loading the model 2
+    model2, preprocess2 = clip.load("ViT-B/16", device=device)
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    path = os.path.join(checkpoints_path, 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz_namechgV2_chckpt_30.pt')
+    checkpoint = torch.load(path)
+    model2.load_state_dict(checkpoint)
+    model2.float()
+
+    # Creation and loading the model 3
+    model3, preprocess3 = clip.load("ViT-B/16", device=device)
+    checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
+    path = os.path.join(checkpoints_path, 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz_namechgV3_chckpt_25.pt')
+    checkpoint = torch.load(path)
+    model3.load_state_dict(checkpoint)
+    model3.float()
+
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    loss_fn = hydra.utils.instantiate(cfg.loss_fn)
-    datamodule = hydra.utils.instantiate(cfg.datamodule)
+    models = [model0, model1, model2, model3]
+    texts = [text0, text1, text2, text3]
 
-    augments = AugmentationTransforms().toList()
+    model = EnsembleModelList(models, texts, cfg.dataset.num_classes).to(device)
 
-    # augments = [
-    #     transforms.Compose([transforms.RandomCrop((180,180)),transforms.Resize((224,224))]),
-    #     transforms.Compose([transforms.RandomCrop((300,300), pad_if_needed=True),transforms.Resize((224,224))]),
-    #     transforms.Compose(5*[transforms.RandomErasing(p=.75, scale=(0.01, 0.05), ratio=(0.5, 1.5))]),
-    #     transforms.RandomHorizontalFlip(p=0.5),
-    #     transforms.RandomVerticalFlip(p=0.5),
-    #     transforms.Compose([AddGaussianNoise(mean=0.0, std=0.2),transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-    #     transforms.Compose([transforms.RandomRotation(degrees=180,expand=True),transforms.Resize((224,224))])
-    #     ]
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=wd, betas=betas)
+    # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
 
-    random_transform = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Resize((224, 224),antialias=None),
-                transforms.RandomHorizontalFlip(p=.5),
-                transforms.RandomVerticalFlip(p=.5),
-                AddGaussianNoise(mean=0.0, std=0.2),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ])
+    # train_dataset = datamodule.train_dataset
+    # val_loader = datamodule.val_dataloader()
 
     simple_transform = transforms.Compose([
                 transforms.ToTensor(),
@@ -121,55 +168,13 @@ def train(cfg):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
 
-
-    
-
-    train_path = 'train' if final else 'train_val'
+    train_path = 'train'
     traindir = os.path.join(cfg.data_dir, train_path)
     valdir = os.path.join(cfg.data_dir, 'val_train')
 
     train_dataset = ImageFolder(traindir, transform=simple_transform)
-    # train_dataset = ImageFolder(traindir, transform=random_transform)
-
-    val_dataset = ImageFolder(valdir, transform=simple_transform)
-    class_to_idx = datamodule.dataset.class_to_idx
-
-    class_list = list(range(48))
-    for  (class_name, index) in class_to_idx.items():
-        class_name = class_name.lower()
-        if class_name in name_changer.keys():
-            class_list[index] = name_changer[class_name]
-        else:
-            class_list[index] = class_name
-
-    
-    logger = wandb.init(project="report confmat", name=wandbname)
-    
-    # model, preprocess = clip.load("ViT-B/32", device=device)
-    model, preprocess = clip.load("ViT-B/16", device=device)
-
-    if resume :
-        checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-        path = os.path.join(checkpoints_path, 'path.pt')
-        checkpoint = torch.load(path)
-        model.load_state_dict(checkpoint)
-
-    model.float()
-
-    for name, param in model.named_parameters():
-        # if ('mlp' in name) and (name.startswith('visual')):
-        # if ('mlp' in name):
-        if True:
-            continue
-        else:
-            param.requires_grad = False
-
-    text = clip.tokenize(class_list).to(device)
-
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=wd)
-    # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
-
     train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+    val_dataset = ImageFolder(valdir, transform=simple_transform)
     val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
 
     # train_loader = datamodule.train_dataloader()
@@ -180,27 +185,19 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        # sampled_ops = np.random.choice(augments, aug_num)
-        # sampled_aug = transforms.Compose(sampled_ops)
-        # train_augment = transforms.Compose([simple_transform,sampled_aug])
-        # train_dataset.transform = train_augment
-        # train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
-
         for _, batch in enumerate(train_loader):
             images, labels = batch
             images = images.to(device)
             labels = labels.to(device)
-
-            logits_per_image, logits_per_text = model(images, text)
-
-            loss = loss_fn(logits_per_image, labels)
+            preds = model(images)
+            loss = loss_fn(preds, labels)
             logger.log({"loss": loss.detach().cpu().numpy()})
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             epoch_loss += loss.detach().cpu().numpy() * len(images)
             epoch_num_correct += (
-                (logits_per_image.argmax(1) == labels).sum().detach().cpu().numpy()
+                (preds.argmax(1) == labels).sum().detach().cpu().numpy()
             )
             num_samples += len(images)
         epoch_loss /= num_samples
@@ -216,20 +213,19 @@ def train(cfg):
         epoch_num_correct = 0
         num_samples = 0
 
-        if epoch%numcheck == 0 and not final:
+        if epoch%10 == 0 and activate_checkpoint :
             checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
             torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_{epoch}.pt'))
-
 
         for _, batch in enumerate(val_loader):
             images, labels = batch
             images = images.to(device)
             labels = labels.to(device)
-            logits_per_image, logits_per_text = model(images, text)
-            loss = loss_fn(logits_per_image, labels)
+            preds = model(images)
+            loss = loss_fn(preds, labels)
             epoch_loss += loss.detach().cpu().numpy() * len(images)
             epoch_num_correct += (
-                (logits_per_image.argmax(1) == labels).sum().detach().cpu().numpy()
+                (preds.argmax(1) == labels).sum().detach().cpu().numpy()
             )
             num_samples += len(images)
 
@@ -245,6 +241,7 @@ def train(cfg):
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
     torch.save(model.state_dict(), os.path.join(checkpoints_path, f'{wandbname}_chckpt_final.pt'))
     wandb.finish()
+
 
 if __name__ == "__main__":
     train()
