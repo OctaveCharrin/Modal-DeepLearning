@@ -19,7 +19,16 @@ def main(cfg):
 
     datamodule = hydra.utils.instantiate(cfg.datamodule)
 
-    val_dataloader = datamodule.val_dataloader()
+    simple_transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Resize((224, 224),antialias=None),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+
+    valdir = os.path.join(cfg.data_dir, 'val_train')
+    val_dataset = ImageFolder(valdir, transform=simple_transform)
+    val_dataloader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
+
 
     class_to_idx = datamodule.dataset.class_to_idx
 
@@ -64,8 +73,20 @@ def main(cfg):
         'veloute' : 'a veloute soup in a cup',
         'vintage' : 'a vintage building or castle',
         'zinfandel' : 'red wine glass bottle or grape field'}
+    name_changerV3 = {
+        'bat': 'a bat',
+        'black tailed deer' : 'a deer',
+        'carbine' : 'a carbine rifle pistol weapon',
+        'couscous' : 'an oriental granular couscous',
+        'ethyl alcohol' : 'alcohol effects',
+        'florist' : 'florist flowers',
+        'gosling' : 'a gosling or Ryan Gosling',
+        'grenadine' : 'a grenade red fruity mood picture',
+        'organ loft' : 'a church organ loft with stainglass',
+        'platter' : 'a platter plate',
+        'zinfandel' : 'red wine glass bottle or grape field'}
     
-    name_changer = name_changerV2
+    # name_changer = name_changerV2
     
     class_list = list(range(48))
     for  (class_name, index) in class_to_idx.items():
@@ -77,24 +98,28 @@ def main(cfg):
     
     text = clip.tokenize(class_list).to(device)
 
-    zeroshot, _ = clip.load("ViT-B/16", device=device)
-    finetuned, _ = clip.load("ViT-B/16", device=device)
-
     checkpoints_path =  os.path.join(cfg.root_dir, 'checkpoints')
-    path = os.path.join(checkpoints_path, 'FINAL_clip16_lr5e-8_wd.01_simple_allunfroz_namechg_chckpt_final.pt')
+    path = os.path.join(checkpoints_path, 'thisREPORT_confmat_clip16_lr5e-8_wd.01_simple_allunfroz_chckpt_final.pt')
     checkpoint = torch.load(path)
-    finetuned.load_state_dict(checkpoint)
-
-    theta_0 = zeroshot.state_dict()
-    theta_1 = finetuned.state_dict()
 
     best = (0,0)
 
-    for alpha in np.linspace(0,1,20, endpoint=True):
-        theta = {
-            key: (1-alpha) * theta_0[key] + alpha * theta_1[key]
-            for key in theta_0.keys()
-        }
+    start, end = 0,1
+    nb = 11
+
+    for alpha in np.linspace(start,end,nb, endpoint=True):
+        if (start, end) == (0,1):
+            alpha = 1-alpha
+        zeroshot, _ = clip.load("ViT-B/16", device=device)
+        finetuned, _ = clip.load("ViT-B/16", device=device)
+
+
+        finetuned.load_state_dict(checkpoint)
+
+        theta_0 = zeroshot.state_dict()
+        theta_1 = finetuned.state_dict()
+
+        theta = {key : (1-alpha) * theta_0[key] + alpha * theta_1[key] for key in theta_0.keys()}
 
         finetuned.load_state_dict(theta)
         acc = eval(finetuned, text, val_dataloader, device)
