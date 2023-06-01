@@ -1,8 +1,6 @@
-split_dataset.py
 wandb
 outputs
 dataset
 datasetV2
-challenge_subset
 checkpoints
 __pycache__
