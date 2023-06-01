@@ -17,3 +17,4 @@ testing.py
 file.txt
 *.txt
 *.jpg
+/train_48_augmented

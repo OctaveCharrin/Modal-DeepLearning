@@ -48,7 +48,7 @@ def main(context):
     global best_prec1
 
     # os.environ['WANDB_MODE'] = 'offline'
-    logger = wandb.init(project="mean_teacher", name='test')
+    logger = wandb.init(project="mean_teacher", name='night_run')
 
     checkpoint_path = context.transient_dir
     training_log = context.create_train_log("training")
@@ -126,7 +126,7 @@ def main(context):
         else:
             is_best = False
 
-        if args.checkpoint_epochs and (epoch + 1) % 50 == 0:
+        if args.checkpoint_epochs and (epoch + 1) % 60 == 0:
             save_checkpoint({
                 'epoch': epoch + 1,
                 'global_step': global_step,

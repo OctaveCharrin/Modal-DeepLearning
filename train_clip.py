@@ -27,7 +27,7 @@ def train(cfg):
     final = False
     resume = False
     numcheck = 5
-    wandbname = 'REPORT_clip16_lr5e-8_wd.01_simple_allunfroz'
+    wandbname = 'TEST_clip16_lr5e-8_wd.01_aug_allunfroz'
 
     name_changer = {'entoloma lividum' : 'an entoloma lividium mushroom',
                     'salvelinus fontinalis' : 'a salvelinus fontinalis fish',
@@ -143,7 +143,7 @@ def train(cfg):
             class_list[index] = class_name
 
     
-    logger = wandb.init(project="report confmat", name=wandbname)
+    logger = wandb.init(project="report tests", name=wandbname)
     
     # model, preprocess = clip.load("ViT-B/32", device=device)
     model, preprocess = clip.load("ViT-B/16", device=device)
@@ -169,11 +169,11 @@ def train(cfg):
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=wd)
     # optimizer = hydra.utils.instantiate(cfg.optim, params=model.parameters())
 
-    train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
-    val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
+    # train_loader = DataLoader(train_dataset, batch_size=datamodule.batch_size, shuffle=True, num_workers=datamodule.num_workers)
+    # val_loader = DataLoader(val_dataset, batch_size=datamodule.batch_size, shuffle=False, num_workers=datamodule.num_workers)
 
-    # train_loader = datamodule.train_dataloader()
-    # val_loader = datamodule.val_dataloader()
+    train_loader = datamodule.train_dataloader()
+    val_loader = datamodule.val_dataloader()
 
     for epoch in tqdm(range(cfg.epochs)):
         epoch_loss = 0

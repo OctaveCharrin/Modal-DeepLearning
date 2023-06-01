@@ -12,6 +12,7 @@ defaults:
 num_classes: 48
 batch_size:  20
 num_workers: 3
-train_path: ${data_dir}/train
+train_path: ${data_dir}/../train_48_augmented
+
 test_path: ${data_dir}/test
 unlabeled_path: ${data_dir}/unlabelled
