@@ -1,0 +1,5 @@
+_target_: models.clip.ClipFinetune
+model: 'ViT-B/16'
+num_class: ${dataset.num_classes}
+class_path: ${dataset.train_path}
+name_changer: 1
